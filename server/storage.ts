@@ -172,8 +172,11 @@ export class MemStorage implements IStorage {
   async createDevice(insertDevice: InsertDevice): Promise<Device> {
     const id = this.currentDeviceId++;
     const device: Device = {
-      ...insertDevice,
       id,
+      name: insertDevice.name,
+      imei: insertDevice.imei || null,
+      serialNumber: insertDevice.serialNumber || null,
+      deviceType: insertDevice.deviceType,
       status: "offline",
       batteryLevel: 0,
       lastSeen: new Date(),
@@ -209,8 +212,10 @@ export class MemStorage implements IStorage {
   async createDeviceCommand(insertCommand: InsertDeviceCommand): Promise<DeviceCommand> {
     const id = this.currentCommandId++;
     const command: DeviceCommand = {
-      ...insertCommand,
       id,
+      deviceId: insertCommand.deviceId || null,
+      command: insertCommand.command,
+      issuedBy: insertCommand.issuedBy || null,
       status: "pending",
       issuedAt: new Date(),
       completedAt: null,
@@ -238,8 +243,9 @@ export class MemStorage implements IStorage {
   async createChatMessage(insertMessage: InsertChatMessage): Promise<ChatMessage> {
     const id = this.currentChatId++;
     const message: ChatMessage = {
-      ...insertMessage,
       id,
+      userId: insertMessage.userId || null,
+      message: insertMessage.message,
       response: null,
       timestamp: new Date(),
     };

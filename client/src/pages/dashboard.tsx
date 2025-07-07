@@ -1,16 +1,18 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, BarChart, FileText } from "lucide-react";
+import { Plus, BarChart, FileText, Users } from "lucide-react";
 import { Sidebar } from "@/components/mdm/sidebar";
 import { Header } from "@/components/mdm/header";
 import { StatsCards } from "@/components/mdm/stats-cards";
 import { DeviceTable } from "@/components/mdm/device-table";
 import { ChatWidget } from "@/components/mdm/chat-widget";
 import { EnrollmentModal } from "@/components/mdm/enrollment-modal";
+import { BulkEnrollment } from "@/components/mdm/bulk-enrollment";
 
 export default function Dashboard() {
   const [enrollmentModalOpen, setEnrollmentModalOpen] = useState(false);
+  const [bulkEnrollmentOpen, setBulkEnrollmentOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900">
@@ -43,9 +45,10 @@ export default function Dashboard() {
                   <Button 
                     className="flex items-center space-x-3 h-12 bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900/20 dark:hover:bg-green-900/30 dark:text-green-400"
                     variant="ghost"
+                    onClick={() => setBulkEnrollmentOpen(true)}
                   >
-                    <BarChart size={20} />
-                    <span>Bulk Actions</span>
+                    <Users size={20} />
+                    <span>Bulk Enrollment</span>
                   </Button>
                   <Button 
                     className="flex items-center space-x-3 h-12 bg-purple-100 hover:bg-purple-200 text-purple-700 dark:bg-purple-900/20 dark:hover:bg-purple-900/30 dark:text-purple-400"
@@ -69,6 +72,11 @@ export default function Dashboard() {
       <EnrollmentModal
         open={enrollmentModalOpen}
         onOpenChange={setEnrollmentModalOpen}
+      />
+      
+      <BulkEnrollment
+        open={bulkEnrollmentOpen}
+        onOpenChange={setBulkEnrollmentOpen}
       />
     </div>
   );

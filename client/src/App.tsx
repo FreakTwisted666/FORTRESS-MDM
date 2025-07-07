@@ -7,6 +7,9 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
+import Applications from "@/pages/applications";
+import Policies from "@/pages/policies";
+import Analytics from "@/pages/analytics";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -28,6 +31,12 @@ function Router() {
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/dashboard" component={Dashboard} />
+          <Route path="/applications" component={Applications} />
+          <Route path="/policies" component={Policies} />
+          <Route path="/analytics" component={Analytics} />
+          <Route path="/devices" component={Dashboard} />
+          <Route path="/users" component={Dashboard} />
+          <Route path="/alerts" component={Dashboard} />
         </>
       )}
       <Route component={NotFound} />

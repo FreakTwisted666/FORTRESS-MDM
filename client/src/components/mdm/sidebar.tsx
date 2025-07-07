@@ -1,17 +1,20 @@
 import { Shield, BarChart3, MonitorSmartphone, Users, Settings, Bell, AppWindow } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { name: "Dashboard", icon: BarChart3, href: "/", active: true },
-  { name: "Devices", icon: MonitorSmartphone, href: "/devices", active: false },
-  { name: "Applications", icon: AppWindow, href: "/applications", active: false },
-  { name: "Users", icon: Users, href: "/users", active: false },
-  { name: "Policies", icon: Settings, href: "/policies", active: false },
-  { name: "Analytics", icon: BarChart3, href: "/analytics", active: false },
-  { name: "Alerts", icon: Bell, href: "/alerts", active: false },
+  { name: "Dashboard", icon: BarChart3, href: "/" },
+  { name: "Devices", icon: MonitorSmartphone, href: "/devices" },
+  { name: "Applications", icon: AppWindow, href: "/applications" },
+  { name: "Users", icon: Users, href: "/users" },
+  { name: "Policies", icon: Settings, href: "/policies" },
+  { name: "Analytics", icon: BarChart3, href: "/analytics" },
+  { name: "Alerts", icon: Bell, href: "/alerts" },
 ];
 
 export function Sidebar() {
+  const [location] = useLocation();
+
   return (
     <div className="w-64 bg-white dark:bg-gray-800 shadow-lg fixed h-full z-10">
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
@@ -27,20 +30,25 @@ export function Sidebar() {
       </div>
       
       <nav className="p-4 space-y-2">
-        {navItems.map((item) => (
-          <button
-            key={item.name}
-            className={cn(
-              "flex items-center space-x-3 px-4 py-3 w-full text-left rounded-lg transition-colors",
-              item.active
-                ? "bg-primary/10 text-primary"
-                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-            )}
-          >
-            <item.icon size={20} />
-            <span>{item.name}</span>
-          </button>
-        ))}
+        {navItems.map((item) => {
+          const isActive = location === item.href || (item.href === "/" && location === "/dashboard");
+          
+          return (
+            <Link key={item.name} href={item.href}>
+              <button
+                className={cn(
+                  "flex items-center space-x-3 px-4 py-3 w-full text-left rounded-lg transition-colors",
+                  isActive
+                    ? "bg-primary/10 text-primary"
+                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                )}
+              >
+                <item.icon size={20} />
+                <span>{item.name}</span>
+              </button>
+            </Link>
+          );
+        })}
       </nav>
     </div>
   );

@@ -183,10 +183,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const chatMessage = await storage.createChatMessage({
         userId,
         message,
-        response,
       });
       
-      res.json(chatMessage);
+      // Update the chat message with the response
+      const updatedChatMessage = { ...chatMessage, response };
+      
+      res.json(updatedChatMessage);
     } catch (error) {
       res.status(400).json({ message: "Failed to process chat message" });
     }
