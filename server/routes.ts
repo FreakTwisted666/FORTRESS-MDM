@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertDeviceSchema, insertDeviceCommandSchema, insertChatMessageSchema } from "@shared/schema";
+import { insertUserSchema, insertDeviceSchema, insertDeviceCommandSchema, insertChatMessageSchema, type Device } from "@shared/schema";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -150,8 +150,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (lowerMessage.includes("offline") || lowerMessage.includes("offline devices")) {
         const devices = await storage.getDevices();
-        const offlineDevices = devices.filter(d => d.status === "offline");
-        response += `Found ${offlineDevices.length} offline devices: ${offlineDevices.map(d => d.name).join(", ")}`;
+        const offlineDevices = devices.filter((d: Device) => d.status === "offline");
+        response += `Found ${offlineDevices.length} offline devices: ${offlineDevices.map((d: Device) => d.name).join(", ")}`;
       } else if (lowerMessage.includes("lock") && lowerMessage.includes("imei")) {
         const imeiMatch = lowerMessage.match(/\d{15}/);
         if (imeiMatch) {
@@ -172,9 +172,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } else if (lowerMessage.includes("status") || lowerMessage.includes("devices")) {
         const devices = await storage.getDevices();
-        const online = devices.filter(d => d.status === "online").length;
-        const offline = devices.filter(d => d.status === "offline").length;
-        const warning = devices.filter(d => d.status === "warning").length;
+        const online = devices.filter((d: Device) => d.status === "online").length;
+        const offline = devices.filter((d: Device) => d.status === "offline").length;
+        const warning = devices.filter((d: Device) => d.status === "warning").length;
         response += `Device Status: ${online} online, ${offline} offline, ${warning} warning`;
       } else {
         response += "Try commands like 'show offline devices', 'lock device with IMEI 123456789012345', or 'device status'.";
@@ -199,9 +199,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const devices = await storage.getDevices();
       const totalDevices = devices.length;
-      const onlineDevices = devices.filter(d => d.status === "online").length;
-      const offlineDevices = devices.filter(d => d.status === "offline").length;
-      const warningDevices = devices.filter(d => d.status === "warning").length;
+      const onlineDevices = devices.filter((d: Device) => d.status === "online").length;
+      const offlineDevices = devices.filter((d: Device) => d.status === "offline").length;
+      const warningDevices = devices.filter((d: Device) => d.status === "warning").length;
       
       // Mock policy violations and critical alerts
       const policyViolations = 23;

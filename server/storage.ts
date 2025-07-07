@@ -14,6 +14,8 @@ import {
   type InsertChatMessage,
   type DeviceLog
 } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -276,4 +278,86 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  async getDevices(): Promise<Device[]> {
+    return await db.select().from(devices);
+  }
+
+  async getDevice(id: number): Promise<Device | undefined> {
+    const [device] = await db.select().from(devices).where(eq(devices.id, id));
+    return device;
+  }
+
+  async getDeviceByImei(imei: string): Promise<Device | undefined> {
+    const [device] = await db.select().from(devices).where(eq(devices.imei, imei));
+    return device;
+  }
+
+  async createDevice(insertDevice: InsertDevice): Promise<Device> {
+    const [device] = await db.insert(devices).values(insertDevice).returning();
+    return device;
+  }
+
+  async updateDevice(id: number, updates: Partial<Device>): Promise<Device> {
+    const [device] = await db.update(devices).set(updates).where(eq(devices.id, id)).returning();
+    return device;
+  }
+
+  async deleteDevice(id: number): Promise<void> {
+    await db.delete(devices).where(eq(devices.id, id));
+  }
+
+  async createDeviceCommand(insertCommand: InsertDeviceCommand): Promise<DeviceCommand> {
+    const [command] = await db.insert(deviceCommands).values(insertCommand).returning();
+    return command;
+  }
+
+  async getDeviceCommands(deviceId: number): Promise<DeviceCommand[]> {
+    return await db.select().from(deviceCommands).where(eq(deviceCommands.deviceId, deviceId));
+  }
+
+  async updateDeviceCommand(id: number, updates: Partial<DeviceCommand>): Promise<DeviceCommand> {
+    const [command] = await db.update(deviceCommands).set(updates).where(eq(deviceCommands.id, id)).returning();
+    return command;
+  }
+
+  async createChatMessage(insertMessage: InsertChatMessage): Promise<ChatMessage> {
+    const [message] = await db.insert(chatMessages).values(insertMessage).returning();
+    return message;
+  }
+
+  async getChatMessages(userId: number): Promise<ChatMessage[]> {
+    return await db.select().from(chatMessages).where(eq(chatMessages.userId, userId));
+  }
+
+  async createDeviceLog(log: { deviceId: number; action: string; details?: any }): Promise<DeviceLog> {
+    const [deviceLog] = await db.insert(deviceLogs).values({
+      deviceId: log.deviceId,
+      action: log.action,
+      details: log.details,
+      timestamp: new Date()
+    }).returning();
+    return deviceLog;
+  }
+
+  async getDeviceLogs(deviceId: number): Promise<DeviceLog[]> {
+    return await db.select().from(deviceLogs).where(eq(deviceLogs.deviceId, deviceId));
+  }
+}
+
+export const storage = new DatabaseStorage();

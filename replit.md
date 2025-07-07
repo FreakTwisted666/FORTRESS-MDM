@@ -164,3 +164,7 @@ Changelog:
   - Bulk Enrollment with CSV import functionality
   - Multi-page navigation and enhanced UI
   - Fixed TypeScript compilation errors
+- July 07, 2025. Migration to PostgreSQL database:
+  - Replaced in-memory storage with persistent database
+  - Created database seed script with demo data
+  - System now production-ready with data persistence
