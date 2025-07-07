@@ -168,3 +168,16 @@ Changelog:
   - Replaced in-memory storage with persistent database
   - Created database seed script with demo data
   - System now production-ready with data persistence
+- July 07, 2025. Added Kiosk Management with Single Sign-On:
+  - Comprehensive kiosk management page with SSO authentication
+  - Device control rules for WiFi, Mobile Data, GPS, Bluetooth
+  - API endpoints for device controls and bulk operations
+  - Interactive device control dashboard with enable/disable buttons
+  - SSO configuration supporting SAML, OAuth, OIDC, Azure AD, Google Workspace
+  - Updated AI chatbot with kiosk and device control commands
+- July 07, 2025. Implemented Dark Mode:
+  - Complete dark/light theme system with CSS variables
+  - Theme provider with localStorage persistence and system detection
+  - Theme toggle in header with smooth transitions
+  - Dark mode styling across all components and pages
+  - Updated chatbot to include dark mode information

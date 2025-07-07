@@ -22,7 +22,7 @@ export function ChatWidget() {
     {
       id: "welcome",
       message: "",
-      response: "Hello! I can help you manage your devices. Try asking \"Show me offline devices\" or \"Lock device with IMEI 352033111234567\".",
+      response: "Hello! I'm your Fortress MDM assistant. I can help with device management, kiosk configuration, SSO setup, and device controls. Try asking \"Show device status\", \"Enable kiosk mode\", \"Control WiFi on device\", or \"Help\" for more commands.",
       timestamp: new Date(),
       isUser: false,
     },

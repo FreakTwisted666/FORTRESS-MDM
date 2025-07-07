@@ -311,11 +311,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { message, userId } = insertChatMessageSchema.parse(req.body);
       
       // Process the chat message and generate a response
-      let response = "I'm here to help with device management. ";
+      let response = "I'm here to help with enterprise device management. ";
       
       const lowerMessage = message.toLowerCase();
       
-      if (lowerMessage.includes("offline") || lowerMessage.includes("offline devices")) {
+      // Kiosk management commands
+      if (lowerMessage.includes("kiosk") && (lowerMessage.includes("enable") || lowerMessage.includes("activate"))) {
+        const devices = await storage.getDevices();
+        const nonKioskDevices = devices.filter((d: Device) => !d.isKioskMode);
+        response += `Found ${nonKioskDevices.length} devices ready for kiosk mode. Use the Kiosk Management page to configure SSO authentication and enable kiosk mode with single app deployment.`;
+      } else if (lowerMessage.includes("kiosk") && (lowerMessage.includes("sso") || lowerMessage.includes("single sign"))) {
+        response += "SSO kiosk configuration supports multiple providers: SAML 2.0, OAuth 2.0, OpenID Connect, LDAP/Active Directory, Azure AD, and Google Workspace. Configure auto-login, session timeout, and force logout settings in the Kiosk Management section.";
+      } else if (lowerMessage.includes("wifi") && (lowerMessage.includes("enable") || lowerMessage.includes("disable") || lowerMessage.includes("control"))) {
+        const imeiMatch = lowerMessage.match(/\d{15}/);
+        if (imeiMatch) {
+          const imei = imeiMatch[0];
+          const device = await storage.getDeviceByImei(imei);
+          if (device) {
+            const action = lowerMessage.includes("disable") ? "disable" : "enable";
+            response += `${action === "enable" ? "Enabling" : "Disabling"} WiFi on device ${device.name} (IMEI: ${imei})...`;
+            await storage.createDeviceCommand({
+              deviceId: device.id,
+              command: `wifi_${action}`,
+              issuedBy: userId,
+            });
+            await storage.createDeviceLog({
+              deviceId: device.id,
+              action: `wifi_${action}d`,
+              details: { source: "chat_assistant" }
+            });
+          } else {
+            response += `Device with IMEI ${imei} not found.`;
+          }
+        } else {
+          response += "To control WiFi, specify device IMEI: 'enable wifi on device 123456789012345' or use bulk controls from Kiosk Management.";
+        }
+      } else if (lowerMessage.includes("mobile data") || lowerMessage.includes("cellular")) {
+        const imeiMatch = lowerMessage.match(/\d{15}/);
+        if (imeiMatch) {
+          const imei = imeiMatch[0];
+          const device = await storage.getDeviceByImei(imei);
+          if (device) {
+            const action = lowerMessage.includes("disable") ? "disable" : "enable";
+            response += `${action === "enable" ? "Enabling" : "Disabling"} mobile data on device ${device.name}...`;
+            await storage.createDeviceCommand({
+              deviceId: device.id,
+              command: `mobile_data_${action}`,
+              issuedBy: userId,
+            });
+          } else {
+            response += `Device with IMEI ${imei} not found.`;
+          }
+        } else {
+          response += "Specify device IMEI to control mobile data: 'disable mobile data on 123456789012345'";
+        }
+      } else if (lowerMessage.includes("gps") && (lowerMessage.includes("enable") || lowerMessage.includes("activate") || lowerMessage.includes("location"))) {
+        const imeiMatch = lowerMessage.match(/\d{15}/);
+        if (imeiMatch) {
+          const imei = imeiMatch[0];
+          const device = await storage.getDeviceByImei(imei);
+          if (device) {
+            response += `Activating GPS location services on device ${device.name}...`;
+            await storage.createDeviceCommand({
+              deviceId: device.id,
+              command: "gps_enable",
+              issuedBy: userId,
+            });
+          } else {
+            response += `Device with IMEI ${imei} not found.`;
+          }
+        } else {
+          response += "Specify device IMEI to control GPS: 'activate gps on 123456789012345'";
+        }
+      } else if (lowerMessage.includes("bulk") && (lowerMessage.includes("control") || lowerMessage.includes("apply"))) {
+        const devices = await storage.getDevices();
+        response += `Bulk controls available for ${devices.length} devices. Use 'Apply Rules' in Kiosk Management to enable/disable WiFi, mobile data, GPS, and Bluetooth across all devices simultaneously.`;
+      } else if (lowerMessage.includes("offline") || lowerMessage.includes("offline devices")) {
         const devices = await storage.getDevices();
         const offlineDevices = devices.filter((d: Device) => d.status === "offline");
         response += `Found ${offlineDevices.length} offline devices: ${offlineDevices.map((d: Device) => d.name).join(", ")}`;
@@ -342,9 +413,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const online = devices.filter((d: Device) => d.status === "online").length;
         const offline = devices.filter((d: Device) => d.status === "offline").length;
         const warning = devices.filter((d: Device) => d.status === "warning").length;
-        response += `Device Status: ${online} online, ${offline} offline, ${warning} warning`;
+        const kioskMode = devices.filter((d: Device) => d.isKioskMode).length;
+        response += `Device Status: ${online} online, ${offline} offline, ${warning} warning, ${kioskMode} in kiosk mode`;
+      } else if (lowerMessage.includes("help") || lowerMessage.includes("commands")) {
+        response += `Available commands:
+• Device Status: 'show device status', 'offline devices'  
+• Device Control: 'enable wifi on IMEI', 'disable mobile data on IMEI', 'activate gps on IMEI'
+• Kiosk Management: 'enable kiosk mode', 'configure SSO authentication'
+• Device Actions: 'lock device with IMEI 123456789012345'
+• Bulk Operations: 'apply bulk controls to all devices'
+• Interface: Dark mode toggle available in header
+
+Enterprise features: SSO authentication, device control rules, policy enforcement, comprehensive analytics, and adaptive dark/light theming.`;
       } else {
-        response += "Try commands like 'show offline devices', 'lock device with IMEI 123456789012345', or 'device status'.";
+        response += "Try commands like 'show device status', 'enable wifi on [IMEI]', 'configure kiosk mode', or 'help' for more options.";
       }
       
       const chatMessage = await storage.createChatMessage({

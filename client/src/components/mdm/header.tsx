@@ -1,5 +1,5 @@
 import { Moon, Sun, Bell, User } from "lucide-react";
-import { useTheme } from "@/components/ui/theme-provider";
+import { useTheme } from "@/components/theme-provider";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
