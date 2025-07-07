@@ -86,6 +86,7 @@ export const insertDeviceSchema = createInsertSchema(devices).pick({
 export const insertDeviceCommandSchema = createInsertSchema(deviceCommands).pick({
   deviceId: true,
   command: true,
+  status: true,
   issuedBy: true,
 });
 

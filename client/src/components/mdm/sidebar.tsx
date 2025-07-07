@@ -1,4 +1,4 @@
-import { Shield, BarChart3, MonitorSmartphone, Users, Settings, Bell, AppWindow } from "lucide-react";
+import { Shield, BarChart3, MonitorSmartphone, Users, Settings, Bell, AppWindow, Monitor } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
@@ -6,6 +6,7 @@ const navItems = [
   { name: "Dashboard", icon: BarChart3, href: "/" },
   { name: "Devices", icon: MonitorSmartphone, href: "/devices" },
   { name: "Applications", icon: AppWindow, href: "/applications" },
+  { name: "Kiosk", icon: Monitor, href: "/kiosk" },
   { name: "Users", icon: Users, href: "/users" },
   { name: "Policies", icon: Settings, href: "/policies" },
   { name: "Analytics", icon: BarChart3, href: "/analytics" },

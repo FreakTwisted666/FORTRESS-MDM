@@ -46,6 +46,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Kiosk management endpoints
+  app.post("/api/devices/:id/kiosk", async (req, res) => {
+    try {
+      const deviceId = parseInt(req.params.id);
+      const { enabled, config } = req.body;
+      
+      const updates = {
+        isKioskMode: enabled,
+        kioskConfig: config || {},
+        updatedAt: new Date()
+      };
+      
+      const updatedDevice = await storage.updateDevice(deviceId, updates);
+      
+      // Log the kiosk action
+      await storage.createDeviceLog({
+        deviceId,
+        action: enabled ? "kiosk_enabled" : "kiosk_disabled",
+        details: { config }
+      });
+      
+      res.json(updatedDevice);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update kiosk mode" });
+    }
+  });
+
+  // Device control endpoints for rules
+  app.post("/api/devices/:id/controls", async (req, res) => {
+    try {
+      const deviceId = parseInt(req.params.id);
+      const { action, enabled } = req.body;
+      
+      // Validate control actions
+      const validActions = ['wifi', 'mobile_data', 'gps', 'bluetooth', 'camera', 'microphone', 'usb'];
+      if (!validActions.includes(action)) {
+        return res.status(400).json({ message: "Invalid control action" });
+      }
+      
+      // Create device command for the control action
+      await storage.createDeviceCommand({
+        deviceId,
+        command: `${action}_${enabled ? 'enable' : 'disable'}`,
+        status: "pending"
+      });
+      
+      // Log the control action
+      await storage.createDeviceLog({
+        deviceId,
+        action: `${action}_${enabled ? 'enabled' : 'disabled'}`,
+        details: { action, enabled }
+      });
+      
+      res.json({ 
+        message: `${action} ${enabled ? 'enabled' : 'disabled'} successfully`,
+        command: `${action}_${enabled ? 'enable' : 'disable'}`
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to execute device control" });
+    }
+  });
+
+  // Bulk device control endpoint
+  app.post("/api/devices/bulk/controls", async (req, res) => {
+    try {
+      const { deviceIds, controls } = req.body;
+      
+      if (!Array.isArray(deviceIds) || !controls) {
+        return res.status(400).json({ message: "Invalid request format" });
+      }
+      
+      const results = [];
+      
+      for (const deviceId of deviceIds) {
+        for (const [action, enabled] of Object.entries(controls)) {
+          await storage.createDeviceCommand({
+            deviceId,
+            command: `${action}_${enabled ? 'enable' : 'disable'}`,
+            status: "pending"
+          });
+          
+          await storage.createDeviceLog({
+            deviceId,
+            action: `bulk_${action}_${enabled ? 'enabled' : 'disabled'}`,
+            details: { action, enabled, bulk: true }
+          });
+        }
+        
+        results.push({ deviceId, status: "commands_queued" });
+      }
+      
+      res.json({ 
+        message: `Bulk controls applied to ${deviceIds.length} devices`,
+        results 
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to execute bulk controls" });
+    }
+  });
+
   // Kiosk device enrollment endpoint
   app.post("/api/kiosk/enroll", async (req, res) => {
     try {
