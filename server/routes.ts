@@ -452,9 +452,14 @@ Enterprise features: SSO authentication, device control rules, policy enforcemen
       const offlineDevices = devices.filter((d: Device) => d.status === "offline").length;
       const warningDevices = devices.filter((d: Device) => d.status === "warning").length;
       
-      // Mock policy violations and critical alerts
-      const policyViolations = 23;
-      const criticalAlerts = 5;
+      // Calculate real policy violations and critical alerts
+      const policyViolations = devices.filter((d: Device) => 
+        d.status === "warning" || !d.lastSeen || 
+        (new Date().getTime() - new Date(d.lastSeen).getTime()) > 24 * 60 * 60 * 1000
+      ).length;
+      const criticalAlerts = devices.filter((d: Device) => 
+        d.status === "offline" || (d.batteryLevel !== null && d.batteryLevel < 15)
+      ).length;
       
       res.json({
         totalDevices,

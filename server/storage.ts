@@ -361,4 +361,5 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
+// Production storage using PostgreSQL database
 export const storage = new DatabaseStorage();
