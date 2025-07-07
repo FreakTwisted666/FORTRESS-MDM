@@ -1,0 +1,98 @@
+📦 Prompt: Clone + Customize Android Kiosk App as Device-Owner
+
+Goal: Clone an open-source kiosk app, turn it into a true device-owner kiosk, and connect it to Firebase for remote MDM control.
+🧭 1. Git Clone Starter
+
+git clone https://github.com/mrugacz95/kiosk.git firebase-mdm-kiosk
+cd firebase-mdm-kiosk
+
+This repo uses Android Lock Task mode and comes with a DeviceAdminReceiver example
+github.com
+github.com+10github.com+10github.com+10
+.
+🧩 2. Required Code Modifications
+✅ a) Add DeviceAdminReceiver & manifest entries
+
+    Ensure you have a MyDeviceAdminReceiver subclass in the code.
+
+    In AndroidManifest.xml, add:
+
+<receiver
+  android:name=".MyDeviceAdminReceiver"
+  android:permission="android.permission.BIND_DEVICE_ADMIN"
+  android:exported="true">
+  <meta-data
+    android:name="android.app.device_admin"
+    android:resource="@xml/device_admin_receiver"/>
+  <intent-filter>
+    <action android:name="android.app.action.DEVICE_ADMIN_ENABLED"/>
+    <action android:name="android.intent.action.BOOT_COMPLETED"/>
+  </intent-filter>
+</receiver>
+
+    Create res/xml/device_admin_receiver.xml listing needed policies
+    github.com
+    github.com
+    .
+
+🔐 b) Enable Lock Task Mode
+
+In your kiosk Activity, include:
+
+val dpm = getSystemService(DevicePolicyManager::class.java)
+if (dpm.isDeviceOwnerApp(packageName)) {
+    dpm.setLockTaskPackages(
+      MyDeviceAdminReceiver.getComponentName(this),
+      arrayOf(packageName)
+    )
+    startLockTask()
+}
+
+This makes the app a launcher kiosk with no nav/status bars .
+🚀 c) Install & Set as Device Owner
+
+After building the APK:
+
+adb install app/build/outputs/apk/debug/app-debug.apk
+adb shell dpm set-device-owner \
+  pl.mrugacz95.kiosk/.MyDeviceAdminReceiver
+
+Use factory-reset or unprovisioned device before this
+github.com+15github.com+15github.com+15
+stackoverflow.com+4medium.com+4github.com+4
+.
+☁️ d) Connect to Firebase
+
+    Add Firebase SDK (Realtime DB / Firestore + FCM)
+
+    On first launch, read IMEI/serial + FCM token and store at /devices/{imei}:
+
+val imei = getIMEI()
+val fcmToken = FirebaseMessaging.getInstance().token.await()
+val ref = Firebase.database.getReference("devices/$imei")
+ref.setValue(mapOf("imei" to imei, "fcmToken" to fcmToken))
+
+Add a listener:
+
+    Firebase.database.getReference("devices/$imei")
+      .addValueEventListener { snap ->
+        val cfg = snap.getValue(DeviceConfig::class.java)
+        if (cfg != null) {
+          dpm.setLockTaskPackages(..., arrayOf(cfg.lockedApp))
+          startLockTask()
+        }
+      }
+
+    Save lastSeen, battery status similarly.
+
+✅ Ready to Go
+
+This prompt gives you:
+
+    A git clone of a working kiosk app
+
+    Manifest and receiver setup for device-owner mode
+
+    Scripted ADB commands for provisioning
+
+    Firebase integration for enrolling and remotely controlling devices via config
