@@ -32,7 +32,7 @@ export const devices = pgTable("devices", {
   policies: jsonb("policies"),
   enrolledAt: timestamp("enrolled_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  kioskConfig: jsonb("kiosk_config"), // Add kiosk configuration
+  kioskConfig: jsonb("kiosk_config").default({}), // Add kiosk configuration
 });
 
 // Device commands table for tracking remote actions

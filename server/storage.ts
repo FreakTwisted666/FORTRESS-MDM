@@ -191,6 +191,7 @@ export class MemStorage implements IStorage {
       policies: null,
       enrolledAt: new Date(),
       updatedAt: new Date(),
+      kioskConfig: {},
     };
     this.devices.set(id, device);
     return device;
