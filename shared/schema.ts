@@ -32,6 +32,7 @@ export const devices = pgTable("devices", {
   policies: jsonb("policies"),
   enrolledAt: timestamp("enrolled_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  kioskConfig: jsonb("kiosk_config"), // Add kiosk configuration
 });
 
 // Device commands table for tracking remote actions
@@ -76,6 +77,10 @@ export const insertDeviceSchema = createInsertSchema(devices).pick({
   imei: true,
   serialNumber: true,
   deviceType: true,
+  fcmToken: true,
+  isKioskMode: true,
+  kioskAppPackage: true,
+  kioskConfig: true,
 });
 
 export const insertDeviceCommandSchema = createInsertSchema(deviceCommands).pick({
@@ -99,3 +104,14 @@ export type InsertDeviceCommand = z.infer<typeof insertDeviceCommandSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type DeviceLog = typeof deviceLogs.$inferSelect;
+
+// Kiosk Config Type
+export type KioskConfig = {
+  lockedApp: string;
+  allowedApps: string[];
+  homeScreenUrl?: string;
+  autoStartApps: string[];
+  disableSettings: boolean;
+  disableStatusBar: boolean;
+  exitCode?: string;
+}

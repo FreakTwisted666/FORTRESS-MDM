@@ -10,6 +10,7 @@ import Dashboard from "@/pages/dashboard";
 import Applications from "@/pages/applications";
 import Policies from "@/pages/policies";
 import Analytics from "@/pages/analytics";
+import Kiosk from "@/pages/kiosk";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -34,6 +35,7 @@ function Router() {
           <Route path="/applications" component={Applications} />
           <Route path="/policies" component={Policies} />
           <Route path="/analytics" component={Analytics} />
+          <Route path="/kiosk" component={Kiosk} />
           <Route path="/devices" component={Dashboard} />
           <Route path="/users" component={Dashboard} />
           <Route path="/alerts" component={Dashboard} />

@@ -46,6 +46,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Kiosk device enrollment endpoint
+  app.post("/api/kiosk/enroll", async (req, res) => {
+    try {
+      const { imei, fcmToken, deviceInfo } = req.body;
+      
+      // Create or update kiosk device
+      const device = {
+        id: `kiosk_${imei}`,
+        name: deviceInfo.name || `Kiosk ${imei}`,
+        type: 'Android Kiosk',
+        status: 'online',
+        lastSeen: new Date().toISOString(),
+        osVersion: deviceInfo.osVersion || 'Unknown',
+        batteryLevel: deviceInfo.batteryLevel || 100,
+        imei,
+        fcmToken,
+        isKiosk: true,
+        kioskConfig: {
+          lockedApp: 'com.company.kiosk',
+          allowedApps: ['com.company.kiosk'],
+          disableSettings: true,
+          disableStatusBar: true
+        }
+      };
+      
+      res.json({ success: true, deviceId: device.id });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to enroll kiosk device" });
+    }
+  });
+
+  // Kiosk configuration update endpoint
+  app.put("/api/kiosk/:deviceId/config", async (req, res) => {
+    try {
+      const { deviceId } = req.params;
+      const { config } = req.body;
+      
+      // Update device configuration
+      // This would trigger a Firebase update that the Android app listens to
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update kiosk configuration" });
+    }
+  });
+
+  // Kiosk device control endpoints
+  app.post("/api/kiosk/:deviceId/lock", async (req, res) => {
+    try {
+      const { deviceId } = req.params;
+      // Send FCM message to lock device
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to lock device" });
+    }
+  });
+
+  app.post("/api/kiosk/:deviceId/unlock", async (req, res) => {
+    try {
+      const { deviceId } = req.params;
+      // Send FCM message to unlock device
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to unlock device" });
+    }
+  });
+
   app.get("/api/devices/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);

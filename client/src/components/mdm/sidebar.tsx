@@ -28,11 +28,11 @@ export function Sidebar() {
           </div>
         </div>
       </div>
-      
+
       <nav className="p-4 space-y-2">
         {navItems.map((item) => {
           const isActive = location === item.href || (item.href === "/" && location === "/dashboard");
-          
+
           return (
             <Link key={item.name} href={item.href}>
               <button
