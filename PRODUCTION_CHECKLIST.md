@@ -11,7 +11,9 @@
 ### 2. Security Configuration
 - [ ] **Session Secret**: Generate strong `SESSION_SECRET` (minimum 32 characters)
 - [ ] **HTTPS**: Ensure SSL/TLS certificates are properly configured
-- [ ] **Authentication**: Review and update default admin credentials (admin/admin123)
+- [ ] **Authentication**: Set ADMIN_EMERGENCY_PASSWORD environment variable (remove admin123 hardcode)
+- [ ] **Enrollment Security**: Set MDM_ENROLLMENT_CODE environment variable
+- [ ] **Default Credentials**: Update Replit Auth configuration
 - [ ] **Rate Limiting**: Consider implementing rate limiting for API endpoints
 - [ ] **CORS**: Configure CORS settings for production domains
 

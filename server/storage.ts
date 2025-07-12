@@ -33,7 +33,7 @@ export interface IStorage {
   // User operations for Replit Auth
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
-  
+
   // Device operations
   getDevices(): Promise<Device[]>;
   getDevice(id: number): Promise<Device | undefined>;
@@ -41,38 +41,38 @@ export interface IStorage {
   createDevice(device: InsertDevice): Promise<Device>;
   updateDevice(id: number, updates: Partial<Device>): Promise<Device>;
   deleteDevice(id: number): Promise<void>;
-  
+
   // Device command operations
   createDeviceCommand(command: InsertDeviceCommand): Promise<DeviceCommand>;
   getDeviceCommands(deviceId: number): Promise<DeviceCommand[]>;
   updateDeviceCommand(id: number, updates: Partial<DeviceCommand>): Promise<DeviceCommand>;
-  
+
   // Chat operations
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
   getChatMessages(userId: number): Promise<ChatMessage[]>;
-  
+
   // Device logs
   createDeviceLog(log: { deviceId: number; action: string; details?: any }): Promise<DeviceLog>;
   getDeviceLogs(deviceId: number): Promise<DeviceLog[]>;
-  
+
   // Geofencing operations
   getGeofences(): Promise<Geofence[]>;
   getGeofence(id: number): Promise<Geofence | undefined>;
   createGeofence(geofence: InsertGeofence): Promise<Geofence>;
   updateGeofence(id: number, updates: Partial<Geofence>): Promise<Geofence>;
   deleteGeofence(id: number): Promise<void>;
-  
+
   // Location policy operations
   getLocationPolicies(): Promise<LocationPolicy[]>;
   getLocationPolicy(id: number): Promise<LocationPolicy | undefined>;
   createLocationPolicy(policy: InsertLocationPolicy): Promise<LocationPolicy>;
   updateLocationPolicy(id: number, updates: Partial<LocationPolicy>): Promise<LocationPolicy>;
   deleteLocationPolicy(id: number): Promise<void>;
-  
+
   // Device location history
   createDeviceLocationHistory(history: InsertDeviceLocationHistory): Promise<DeviceLocationHistory>;
   getDeviceLocationHistory(deviceId: number): Promise<DeviceLocationHistory[]>;
-  
+
   // Geofence alerts
   getGeofenceAlerts(): Promise<GeofenceAlert[]>;
   createGeofenceAlert(alert: InsertGeofenceAlert): Promise<GeofenceAlert>;
@@ -85,7 +85,7 @@ export class MemStorage implements IStorage {
   private deviceCommands: Map<number, DeviceCommand> = new Map();
   private chatMessages: Map<number, ChatMessage> = new Map();
   private deviceLogs: Map<number, DeviceLog> = new Map();
-  
+
   private currentDeviceId = 1;
   private currentCommandId = 1;
   private currentChatId = 1;
@@ -300,7 +300,7 @@ export class MemStorage implements IStorage {
   async getDeviceLogs(deviceId: number): Promise<DeviceLog[]> {
     return Array.from(this.deviceLogs.values()).filter(log => log.deviceId === deviceId);
   }
-  
+
   // Geofencing operations
   private geofences: Map<number, Geofence> = new Map();
   private locationPolicies: Map<number, LocationPolicy> = new Map();
@@ -310,15 +310,15 @@ export class MemStorage implements IStorage {
   private currentLocationPolicyId = 1;
   private currentLocationHistoryId = 1;
   private currentGeofenceAlertId = 1;
-  
+
   async getGeofences(): Promise<Geofence[]> {
     return Array.from(this.geofences.values());
   }
-  
+
   async getGeofence(id: number): Promise<Geofence | undefined> {
     return this.geofences.get(id);
   }
-  
+
   async createGeofence(insertGeofence: InsertGeofence): Promise<Geofence> {
     const id = this.currentGeofenceId++;
     const geofence: Geofence = {
@@ -332,28 +332,28 @@ export class MemStorage implements IStorage {
     this.geofences.set(id, geofence);
     return geofence;
   }
-  
+
   async updateGeofence(id: number, updates: Partial<Geofence>): Promise<Geofence> {
     const geofence = this.geofences.get(id);
     if (!geofence) throw new Error('Geofence not found');
-    
+
     const updated = { ...geofence, ...updates, updatedAt: new Date() };
     this.geofences.set(id, updated);
     return updated;
   }
-  
+
   async deleteGeofence(id: number): Promise<void> {
     this.geofences.delete(id);
   }
-  
+
   async getLocationPolicies(): Promise<LocationPolicy[]> {
     return Array.from(this.locationPolicies.values());
   }
-  
+
   async getLocationPolicy(id: number): Promise<LocationPolicy | undefined> {
     return this.locationPolicies.get(id);
   }
-  
+
   async createLocationPolicy(insertPolicy: InsertLocationPolicy): Promise<LocationPolicy> {
     const id = this.currentLocationPolicyId++;
     const policy: LocationPolicy = {
@@ -367,20 +367,20 @@ export class MemStorage implements IStorage {
     this.locationPolicies.set(id, policy);
     return policy;
   }
-  
+
   async updateLocationPolicy(id: number, updates: Partial<LocationPolicy>): Promise<LocationPolicy> {
     const policy = this.locationPolicies.get(id);
     if (!policy) throw new Error('Location policy not found');
-    
+
     const updated = { ...policy, ...updates, updatedAt: new Date() };
     this.locationPolicies.set(id, updated);
     return updated;
   }
-  
+
   async deleteLocationPolicy(id: number): Promise<void> {
     this.locationPolicies.delete(id);
   }
-  
+
   async createDeviceLocationHistory(insertHistory: InsertDeviceLocationHistory): Promise<DeviceLocationHistory> {
     const id = this.currentLocationHistoryId++;
     const history: DeviceLocationHistory = {
@@ -394,15 +394,15 @@ export class MemStorage implements IStorage {
     this.deviceLocationHistory.set(id, history);
     return history;
   }
-  
+
   async getDeviceLocationHistory(deviceId: number): Promise<DeviceLocationHistory[]> {
     return Array.from(this.deviceLocationHistory.values()).filter(h => h.deviceId === deviceId);
   }
-  
+
   async getGeofenceAlerts(): Promise<GeofenceAlert[]> {
     return Array.from(this.geofenceAlerts.values());
   }
-  
+
   async createGeofenceAlert(insertAlert: InsertGeofenceAlert): Promise<GeofenceAlert> {
     const id = this.currentGeofenceAlertId++;
     const alert: GeofenceAlert = {
@@ -414,7 +414,7 @@ export class MemStorage implements IStorage {
     this.geofenceAlerts.set(id, alert);
     return alert;
   }
-  
+
   async markAlertAsRead(id: number): Promise<void> {
     const alert = this.geofenceAlerts.get(id);
     if (alert) {
@@ -455,6 +455,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getDeviceByImei(imei: string): Promise<Device | undefined> {
+    if (!imei || imei.length !== 15) {
+      throw new Error('Invalid IMEI format');
+    }
     const [device] = await db.select().from(devices).where(eq(devices.imei, imei));
     return device;
   }

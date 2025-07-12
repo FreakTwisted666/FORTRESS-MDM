@@ -50,6 +50,11 @@ if grep -r "admin123" . --exclude-dir=node_modules --exclude-dir=.git --exclude=
     echo "⚠️  Default password found in code. Please update for production."
 fi
 
+# Check for required production environment variables
+if [ -z "$ADMIN_EMERGENCY_PASSWORD" ] || [ -z "$MDM_ENROLLMENT_CODE" ]; then
+    echo "⚠️  Required security environment variables not set. Please configure ADMIN_EMERGENCY_PASSWORD and MDM_ENROLLMENT_CODE"
+fi
+
 # Check for development settings
 if grep -r "NODE_ENV=development" . --exclude-dir=node_modules --exclude-dir=.git --exclude="*.md" --exclude="*.sh"; then
     echo "⚠️  Development environment settings found. Please review."

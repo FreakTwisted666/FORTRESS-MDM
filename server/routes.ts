@@ -248,8 +248,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const deviceId = parseInt(req.params.id);
       const { action, adminPassword, reason } = req.body;
       
-      // Validate admin password (in production, this should be properly secured)
-      if (adminPassword !== 'admin123') {
+      // Validate admin password against environment variable
+      if (!adminPassword || adminPassword !== process.env.ADMIN_EMERGENCY_PASSWORD) {
         return res.status(401).json({ message: "Invalid admin password" });
       }
       
@@ -478,8 +478,8 @@ Enterprise features: SSO authentication, device control rules, policy enforcemen
     try {
       const { enrollmentCode, deviceInfo } = req.body;
       
-      // Validate enrollment code
-      if (!enrollmentCode || enrollmentCode !== 'FORTRESS-MDM-2025') {
+      // Validate enrollment code against environment variable
+      if (!enrollmentCode || enrollmentCode !== process.env.MDM_ENROLLMENT_CODE) {
         return res.status(400).json({ error: 'Invalid enrollment code' });
       }
       
