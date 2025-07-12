@@ -198,3 +198,13 @@ Changelog:
   - Added mobile-specific API endpoints for enrollment, status updates, and command polling
   - Created comprehensive mobile app documentation and build instructions
   - Removed demo credentials from login page for production security
+- July 12, 2025. Replit Authentication Integration:
+  - Successfully integrated Replit Auth replacing username/password authentication
+  - Updated database schema to support Replit Auth (user table with Replit ID, profile info)
+  - Installed and configured OpenID Connect packages (openid-client, passport, express-session)
+  - Created secure session storage using PostgreSQL with connect-pg-simple
+  - Updated client-side authentication hooks to work with Replit Auth flow
+  - Modified landing page to use "Sign In with Replit" button instead of login form
+  - Fixed TypeScript errors and completed DatabaseStorage implementation
+  - Authentication middleware properly returns 401 for unauthorized requests
+  - System ready for production deployment with secure Replit-based authentication

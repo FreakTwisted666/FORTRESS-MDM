@@ -324,6 +324,8 @@ export class MemStorage implements IStorage {
     const geofence: Geofence = {
       id,
       ...insertGeofence,
+      description: insertGeofence.description ?? null,
+      isActive: insertGeofence.isActive ?? null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -357,6 +359,8 @@ export class MemStorage implements IStorage {
     const policy: LocationPolicy = {
       id,
       ...insertPolicy,
+      description: insertPolicy.description ?? null,
+      isActive: insertPolicy.isActive ?? null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -382,6 +386,9 @@ export class MemStorage implements IStorage {
     const history: DeviceLocationHistory = {
       id,
       ...insertHistory,
+      geofenceId: insertHistory.geofenceId ?? null,
+      accuracy: insertHistory.accuracy ?? null,
+      policyViolation: insertHistory.policyViolation ?? null,
       timestamp: new Date(),
     };
     this.deviceLocationHistory.set(id, history);
@@ -401,6 +408,7 @@ export class MemStorage implements IStorage {
     const alert: GeofenceAlert = {
       id,
       ...insertAlert,
+      isRead: insertAlert.isRead ?? null,
       timestamp: new Date(),
     };
     this.geofenceAlerts.set(id, alert);
@@ -489,17 +497,80 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createDeviceLog(log: { deviceId: number; action: string; details?: any }): Promise<DeviceLog> {
-    const [deviceLog] = await db.insert(deviceLogs).values({
-      deviceId: log.deviceId,
-      action: log.action,
-      details: log.details,
-      timestamp: new Date()
-    }).returning();
+    const [deviceLog] = await db.insert(deviceLogs).values(log).returning();
     return deviceLog;
   }
 
   async getDeviceLogs(deviceId: number): Promise<DeviceLog[]> {
     return await db.select().from(deviceLogs).where(eq(deviceLogs.deviceId, deviceId));
+  }
+
+  async getGeofences(): Promise<Geofence[]> {
+    return await db.select().from(geofences);
+  }
+
+  async getGeofence(id: number): Promise<Geofence | undefined> {
+    const [geofence] = await db.select().from(geofences).where(eq(geofences.id, id));
+    return geofence;
+  }
+
+  async createGeofence(insertGeofence: InsertGeofence): Promise<Geofence> {
+    const [geofence] = await db.insert(geofences).values(insertGeofence).returning();
+    return geofence;
+  }
+
+  async updateGeofence(id: number, updates: Partial<Geofence>): Promise<Geofence> {
+    const [geofence] = await db.update(geofences).set(updates).where(eq(geofences.id, id)).returning();
+    return geofence;
+  }
+
+  async deleteGeofence(id: number): Promise<void> {
+    await db.delete(geofences).where(eq(geofences.id, id));
+  }
+
+  async getLocationPolicies(): Promise<LocationPolicy[]> {
+    return await db.select().from(locationPolicies);
+  }
+
+  async getLocationPolicy(id: number): Promise<LocationPolicy | undefined> {
+    const [policy] = await db.select().from(locationPolicies).where(eq(locationPolicies.id, id));
+    return policy;
+  }
+
+  async createLocationPolicy(insertPolicy: InsertLocationPolicy): Promise<LocationPolicy> {
+    const [policy] = await db.insert(locationPolicies).values(insertPolicy).returning();
+    return policy;
+  }
+
+  async updateLocationPolicy(id: number, updates: Partial<LocationPolicy>): Promise<LocationPolicy> {
+    const [policy] = await db.update(locationPolicies).set(updates).where(eq(locationPolicies.id, id)).returning();
+    return policy;
+  }
+
+  async deleteLocationPolicy(id: number): Promise<void> {
+    await db.delete(locationPolicies).where(eq(locationPolicies.id, id));
+  }
+
+  async createDeviceLocationHistory(insertHistory: InsertDeviceLocationHistory): Promise<DeviceLocationHistory> {
+    const [history] = await db.insert(deviceLocationHistory).values(insertHistory).returning();
+    return history;
+  }
+
+  async getDeviceLocationHistory(deviceId: number): Promise<DeviceLocationHistory[]> {
+    return await db.select().from(deviceLocationHistory).where(eq(deviceLocationHistory.deviceId, deviceId));
+  }
+
+  async getGeofenceAlerts(): Promise<GeofenceAlert[]> {
+    return await db.select().from(geofenceAlerts);
+  }
+
+  async createGeofenceAlert(insertAlert: InsertGeofenceAlert): Promise<GeofenceAlert> {
+    const [alert] = await db.insert(geofenceAlerts).values(insertAlert).returning();
+    return alert;
+  }
+
+  async markAlertAsRead(id: number): Promise<void> {
+    await db.update(geofenceAlerts).set({ isRead: true }).where(eq(geofenceAlerts.id, id));
   }
 }
 
