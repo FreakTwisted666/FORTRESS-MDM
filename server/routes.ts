@@ -1,39 +1,24 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertDeviceSchema, insertDeviceCommandSchema, insertChatMessageSchema, type Device } from "@shared/schema";
+import { insertDeviceSchema, insertDeviceCommandSchema, insertChatMessageSchema, type Device } from "@shared/schema";
 import { z } from "zod";
-
-const loginSchema = z.object({
-  username: z.string().min(1),
-  password: z.string().min(1),
-});
+import { setupAuth, isAuthenticated } from "./replitAuth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth routes
-  app.post("/api/auth/login", async (req, res) => {
-    try {
-      const { username, password } = loginSchema.parse(req.body);
-      const user = await storage.getUserByUsername(username);
-      
-      if (!user || user.password !== password) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-      
-      // In a real app, you'd use proper session management
-      res.json({ 
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role 
-      });
-    } catch (error) {
-      res.status(400).json({ message: "Invalid request" });
-    }
-  });
+  // Auth middleware
+  await setupAuth(app);
 
-  app.post("/api/auth/logout", (req, res) => {
-    res.json({ message: "Logged out successfully" });
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
   });
 
   // Device routes

@@ -1,14 +1,25 @@
-import { pgTable, text, varchar, serial, integer, boolean, timestamp, jsonb, real } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, serial, integer, boolean, timestamp, jsonb, real, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Users table for authentication
+// Session storage table for Replit Auth
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// Users table for Replit Auth
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  email: text("email").notNull().unique(),
-  password: text("password").notNull(),
-  role: text("role").notNull().default("admin"),
+  id: varchar("id").primaryKey().notNull(),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -117,10 +128,14 @@ export const geofenceAlerts = pgTable("geofence_alerts", {
 
 // Schema validation
 export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
+  id: true,
   email: true,
-  password: true,
+  firstName: true,
+  lastName: true,
+  profileImageUrl: true,
 });
+
+export type UpsertUser = typeof users.$inferInsert;
 
 export const insertDeviceSchema = createInsertSchema(devices).pick({
   name: true,

@@ -9,7 +9,7 @@ import {
   deviceLocationHistory,
   geofenceAlerts,
   type User, 
-  type InsertUser,
+  type UpsertUser,
   type Device,
   type InsertDevice,
   type DeviceCommand,
@@ -30,10 +30,9 @@ import { db } from "./db";
 import { eq } from "drizzle-orm";
 
 export interface IStorage {
-  // User operations
-  getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  // User operations for Replit Auth
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
   
   // Device operations
   getDevices(): Promise<Device[]>;
@@ -81,26 +80,18 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<number, User> = new Map();
+  private users: Map<string, User> = new Map();
   private devices: Map<number, Device> = new Map();
   private deviceCommands: Map<number, DeviceCommand> = new Map();
   private chatMessages: Map<number, ChatMessage> = new Map();
   private deviceLogs: Map<number, DeviceLog> = new Map();
   
-  private currentUserId = 1;
   private currentDeviceId = 1;
   private currentCommandId = 1;
   private currentChatId = 1;
   private currentLogId = 1;
 
   constructor() {
-    // Initialize with demo admin user
-    this.createUser({
-      username: "admin",
-      email: "admin@fortress-mdm.com",
-      password: "admin123" // In real app, this would be hashed
-    });
-    
     // Initialize with demo devices
     this.initializeDemoDevices();
   }
@@ -171,25 +162,22 @@ export class MemStorage implements IStorage {
     });
   }
 
-  // User operations
-  async getUser(id: number): Promise<User | undefined> {
+  // User operations for Replit Auth
+  async getUser(id: string): Promise<User | undefined> {
     return this.users.get(id);
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.username === username);
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
+  async upsertUser(userData: UpsertUser): Promise<User> {
     const user: User = {
-      ...insertUser,
-      id,
-      role: "admin",
+      id: userData.id,
+      email: userData.email || null,
+      firstName: userData.firstName || null,
+      lastName: userData.lastName || null,
+      profileImageUrl: userData.profileImageUrl || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    this.users.set(id, user);
+    this.users.set(userData.id, user);
     return user;
   }
 
@@ -429,18 +417,23 @@ export class MemStorage implements IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  async getUser(id: number): Promise<User | undefined> {
+  async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
     return user;
   }
 
