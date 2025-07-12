@@ -443,6 +443,115 @@ Enterprise features: SSO authentication, device control rules, policy enforcemen
     }
   });
 
+  // Mobile device enrollment endpoint
+  app.post('/api/enroll', async (req, res) => {
+    try {
+      const { enrollmentCode, deviceInfo } = req.body;
+      
+      // Validate enrollment code
+      if (!enrollmentCode || enrollmentCode !== 'FORTRESS-MDM-2025') {
+        return res.status(400).json({ error: 'Invalid enrollment code' });
+      }
+      
+      // Create device record
+      const device = await storage.createDevice({
+        name: deviceInfo.deviceName,
+        imei: deviceInfo.imei,
+        serialNumber: deviceInfo.serialNumber,
+        model: deviceInfo.deviceName,
+        osVersion: `Android ${deviceInfo.osVersion}`,
+        status: 'online',
+        batteryLevel: deviceInfo.batteryLevel,
+        lastSeen: new Date(),
+        location: deviceInfo.location ? JSON.stringify(deviceInfo.location) : null,
+        isKioskMode: false,
+        kioskConfig: null,
+      });
+      
+      // Generate device token
+      const deviceToken = `device_${device.id}_${Date.now()}`;
+      
+      // Log enrollment
+      await storage.createDeviceLog({
+        deviceId: device.id,
+        action: 'enrolled',
+        details: { token: deviceToken, appVersion: deviceInfo.appVersion }
+      });
+      
+      res.json({ 
+        success: true, 
+        token: deviceToken,
+        deviceId: device.id,
+        serverVersion: '1.0.0'
+      });
+    } catch (error) {
+      console.error('Device enrollment error:', error);
+      res.status(500).json({ error: 'Enrollment failed' });
+    }
+  });
+
+  // Mobile device status update endpoint
+  app.post('/api/device/status', async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      
+      const token = authHeader.substring(7);
+      const deviceInfo = req.body;
+      
+      // Find device by token
+      const devices = await storage.getDevices();
+      const device = devices.find(d => token.includes(`device_${d.id}_`));
+      
+      if (!device) {
+        return res.status(404).json({ error: 'Device not found' });
+      }
+      
+      // Update device status
+      await storage.updateDevice(device.id, {
+        batteryLevel: deviceInfo.batteryLevel,
+        lastSeen: new Date(),
+        location: deviceInfo.location ? JSON.stringify(deviceInfo.location) : null,
+        status: deviceInfo.isOnline ? 'online' : 'offline',
+        isKioskMode: deviceInfo.isKioskMode,
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Device status update error:', error);
+      res.status(500).json({ error: 'Status update failed' });
+    }
+  });
+
+  // Mobile device commands endpoint
+  app.get('/api/device/commands', async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      
+      const token = authHeader.substring(7);
+      const devices = await storage.getDevices();
+      const device = devices.find(d => token.includes(`device_${d.id}_`));
+      
+      if (!device) {
+        return res.status(404).json({ error: 'Device not found' });
+      }
+      
+      // Get pending commands
+      const commands = await storage.getDeviceCommands(device.id);
+      const pendingCommands = commands.filter(cmd => cmd.status === 'pending');
+      
+      res.json(pendingCommands);
+    } catch (error) {
+      console.error('Device commands error:', error);
+      res.status(500).json({ error: 'Failed to fetch commands' });
+    }
+  });
+
   // Stats endpoint
   app.get("/api/stats", async (req, res) => {
     try {

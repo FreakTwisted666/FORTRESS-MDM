@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Fortress MDM</string>
+    <string name="device_admin_label">Fortress MDM Device Admin</string>
+    <string name="device_admin_description">Allows Fortress MDM to manage and secure this device</string>
+    <string name="kiosk_mode">Kiosk Mode</string>
+    <string name="enrollment_title">Device Enrollment</string>
+    <string name="enrollment_description">Connect this device to your organization\'s MDM system</string>
+</resources>
