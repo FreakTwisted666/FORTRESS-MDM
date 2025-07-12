@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, RefreshCw, Lock, RotateCcw, Eye, Trash2, MonitorSmartphone } from "lucide-react";
+import { Search, RefreshCw, Lock, RotateCcw, Eye, Trash2, MonitorSmartphone, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { WipeModal } from "./wipe-modal";
 import { EnrollmentModal } from "./enrollment-modal";
+import { EmergencyActionsButton } from "./emergency-actions";
 import { apiRequest } from "@/lib/queryClient";
 import type { Device } from "@shared/schema";
 
@@ -233,6 +234,7 @@ export function DeviceTable() {
                         >
                           <Trash2 size={16} />
                         </Button>
+                        <EmergencyActionsButton device={device} />
                       </div>
                     </TableCell>
                   </TableRow>

@@ -257,6 +257,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Emergency device actions endpoint
+  app.post("/api/devices/:id/emergency", async (req, res) => {
+    try {
+      const deviceId = parseInt(req.params.id);
+      const { action, adminPassword, reason } = req.body;
+      
+      // Validate admin password (in production, this should be properly secured)
+      if (adminPassword !== 'admin123') {
+        return res.status(401).json({ message: "Invalid admin password" });
+      }
+      
+      // Validate action
+      if (!['lock', 'wipe'].includes(action)) {
+        return res.status(400).json({ message: "Invalid emergency action" });
+      }
+      
+      // Create emergency command
+      const emergencyCommand = await storage.createDeviceCommand({
+        deviceId,
+        command: `emergency_${action}`,
+        status: "pending",
+        issuedBy: 1, // Admin user
+      });
+      
+      // Log the emergency action
+      await storage.createDeviceLog({
+        deviceId,
+        action: `emergency_${action}`,
+        details: { 
+          action, 
+          reason, 
+          timestamp: new Date().toISOString(),
+          adminPassword: '***' // Never log actual passwords
+        }
+      });
+      
+      res.json({ 
+        message: `Emergency ${action} command sent successfully`,
+        commandId: emergencyCommand.id
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to execute emergency action" });
+    }
+  });
+
   // Device command routes
   app.post("/api/devices/:id/commands", async (req, res) => {
     try {

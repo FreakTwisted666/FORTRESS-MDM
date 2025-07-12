@@ -28,6 +28,7 @@ import { Sidebar } from "@/components/mdm/sidebar";
 import { Header } from "@/components/mdm/header";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { KioskAdminUnlock, useKioskAdminUnlock } from "@/components/mdm/kiosk-admin-unlock";
 
 interface KioskDevice {
   id: number;
@@ -52,6 +53,7 @@ interface KioskDevice {
 
 export default function Kiosk() {
   const [selectedDevice, setSelectedDevice] = useState<KioskDevice | null>(null);
+  const { showUnlock, tapCount, handleUnlock, handleCancel } = useKioskAdminUnlock();
   const [kioskConfig, setKioskConfig] = useState({
     allowedApps: ["com.company.kioskapp"],
     restrictedFeatures: ["camera", "bluetooth", "usb"],
@@ -810,6 +812,13 @@ export default function Kiosk() {
           </div>
         </main>
       </div>
+      
+      {/* Hidden Kiosk Admin Unlock (activated by 6 taps) */}
+      <KioskAdminUnlock
+        isOpen={showUnlock}
+        onUnlock={handleUnlock}
+        onCancel={handleCancel}
+      />
     </div>
   );
 }

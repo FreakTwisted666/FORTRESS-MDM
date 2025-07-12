@@ -4,6 +4,10 @@ import {
   deviceCommands, 
   chatMessages, 
   deviceLogs,
+  geofences,
+  locationPolicies,
+  deviceLocationHistory,
+  geofenceAlerts,
   type User, 
   type InsertUser,
   type Device,
@@ -12,7 +16,15 @@ import {
   type InsertDeviceCommand,
   type ChatMessage,
   type InsertChatMessage,
-  type DeviceLog
+  type DeviceLog,
+  type Geofence,
+  type LocationPolicy,
+  type DeviceLocationHistory,
+  type GeofenceAlert,
+  type InsertGeofence,
+  type InsertLocationPolicy,
+  type InsertDeviceLocationHistory,
+  type InsertGeofenceAlert,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
@@ -43,6 +55,29 @@ export interface IStorage {
   // Device logs
   createDeviceLog(log: { deviceId: number; action: string; details?: any }): Promise<DeviceLog>;
   getDeviceLogs(deviceId: number): Promise<DeviceLog[]>;
+  
+  // Geofencing operations
+  getGeofences(): Promise<Geofence[]>;
+  getGeofence(id: number): Promise<Geofence | undefined>;
+  createGeofence(geofence: InsertGeofence): Promise<Geofence>;
+  updateGeofence(id: number, updates: Partial<Geofence>): Promise<Geofence>;
+  deleteGeofence(id: number): Promise<void>;
+  
+  // Location policy operations
+  getLocationPolicies(): Promise<LocationPolicy[]>;
+  getLocationPolicy(id: number): Promise<LocationPolicy | undefined>;
+  createLocationPolicy(policy: InsertLocationPolicy): Promise<LocationPolicy>;
+  updateLocationPolicy(id: number, updates: Partial<LocationPolicy>): Promise<LocationPolicy>;
+  deleteLocationPolicy(id: number): Promise<void>;
+  
+  // Device location history
+  createDeviceLocationHistory(history: InsertDeviceLocationHistory): Promise<DeviceLocationHistory>;
+  getDeviceLocationHistory(deviceId: number): Promise<DeviceLocationHistory[]>;
+  
+  // Geofence alerts
+  getGeofenceAlerts(): Promise<GeofenceAlert[]>;
+  createGeofenceAlert(alert: InsertGeofenceAlert): Promise<GeofenceAlert>;
+  markAlertAsRead(id: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -276,6 +311,120 @@ export class MemStorage implements IStorage {
 
   async getDeviceLogs(deviceId: number): Promise<DeviceLog[]> {
     return Array.from(this.deviceLogs.values()).filter(log => log.deviceId === deviceId);
+  }
+  
+  // Geofencing operations
+  private geofences: Map<number, Geofence> = new Map();
+  private locationPolicies: Map<number, LocationPolicy> = new Map();
+  private deviceLocationHistory: Map<number, DeviceLocationHistory> = new Map();
+  private geofenceAlerts: Map<number, GeofenceAlert> = new Map();
+  private currentGeofenceId = 1;
+  private currentLocationPolicyId = 1;
+  private currentLocationHistoryId = 1;
+  private currentGeofenceAlertId = 1;
+  
+  async getGeofences(): Promise<Geofence[]> {
+    return Array.from(this.geofences.values());
+  }
+  
+  async getGeofence(id: number): Promise<Geofence | undefined> {
+    return this.geofences.get(id);
+  }
+  
+  async createGeofence(insertGeofence: InsertGeofence): Promise<Geofence> {
+    const id = this.currentGeofenceId++;
+    const geofence: Geofence = {
+      id,
+      ...insertGeofence,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.geofences.set(id, geofence);
+    return geofence;
+  }
+  
+  async updateGeofence(id: number, updates: Partial<Geofence>): Promise<Geofence> {
+    const geofence = this.geofences.get(id);
+    if (!geofence) throw new Error('Geofence not found');
+    
+    const updated = { ...geofence, ...updates, updatedAt: new Date() };
+    this.geofences.set(id, updated);
+    return updated;
+  }
+  
+  async deleteGeofence(id: number): Promise<void> {
+    this.geofences.delete(id);
+  }
+  
+  async getLocationPolicies(): Promise<LocationPolicy[]> {
+    return Array.from(this.locationPolicies.values());
+  }
+  
+  async getLocationPolicy(id: number): Promise<LocationPolicy | undefined> {
+    return this.locationPolicies.get(id);
+  }
+  
+  async createLocationPolicy(insertPolicy: InsertLocationPolicy): Promise<LocationPolicy> {
+    const id = this.currentLocationPolicyId++;
+    const policy: LocationPolicy = {
+      id,
+      ...insertPolicy,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.locationPolicies.set(id, policy);
+    return policy;
+  }
+  
+  async updateLocationPolicy(id: number, updates: Partial<LocationPolicy>): Promise<LocationPolicy> {
+    const policy = this.locationPolicies.get(id);
+    if (!policy) throw new Error('Location policy not found');
+    
+    const updated = { ...policy, ...updates, updatedAt: new Date() };
+    this.locationPolicies.set(id, updated);
+    return updated;
+  }
+  
+  async deleteLocationPolicy(id: number): Promise<void> {
+    this.locationPolicies.delete(id);
+  }
+  
+  async createDeviceLocationHistory(insertHistory: InsertDeviceLocationHistory): Promise<DeviceLocationHistory> {
+    const id = this.currentLocationHistoryId++;
+    const history: DeviceLocationHistory = {
+      id,
+      ...insertHistory,
+      timestamp: new Date(),
+    };
+    this.deviceLocationHistory.set(id, history);
+    return history;
+  }
+  
+  async getDeviceLocationHistory(deviceId: number): Promise<DeviceLocationHistory[]> {
+    return Array.from(this.deviceLocationHistory.values()).filter(h => h.deviceId === deviceId);
+  }
+  
+  async getGeofenceAlerts(): Promise<GeofenceAlert[]> {
+    return Array.from(this.geofenceAlerts.values());
+  }
+  
+  async createGeofenceAlert(insertAlert: InsertGeofenceAlert): Promise<GeofenceAlert> {
+    const id = this.currentGeofenceAlertId++;
+    const alert: GeofenceAlert = {
+      id,
+      ...insertAlert,
+      timestamp: new Date(),
+    };
+    this.geofenceAlerts.set(id, alert);
+    return alert;
+  }
+  
+  async markAlertAsRead(id: number): Promise<void> {
+    const alert = this.geofenceAlerts.get(id);
+    if (alert) {
+      alert.isRead = true;
+      this.geofenceAlerts.set(id, alert);
+    }
   }
 }
 

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, serial, integer, boolean, timestamp, jsonb, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -65,6 +65,56 @@ export const deviceLogs = pgTable("device_logs", {
   timestamp: timestamp("timestamp").defaultNow(),
 });
 
+// Geofences table for location-based zones
+export const geofences = pgTable("geofences", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  latitude: real("latitude").notNull(),
+  longitude: real("longitude").notNull(),
+  radius: integer("radius").notNull(), // in meters
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Location policies table for geofence-based rules
+export const locationPolicies = pgTable("location_policies", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  geofenceId: integer("geofence_id").notNull().references(() => geofences.id),
+  policyType: varchar("policy_type", { length: 50 }).notNull(), // 'allow', 'restrict', 'notify'
+  actions: jsonb("actions").notNull(), // actions to take when policy is triggered
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Device location history for tracking
+export const deviceLocationHistory = pgTable("device_location_history", {
+  id: serial("id").primaryKey(),
+  deviceId: integer("device_id").notNull().references(() => devices.id),
+  latitude: real("latitude").notNull(),
+  longitude: real("longitude").notNull(),
+  accuracy: real("accuracy"), // GPS accuracy in meters
+  timestamp: timestamp("timestamp").defaultNow(),
+  geofenceId: integer("geofence_id").references(() => geofences.id),
+  policyViolation: boolean("policy_violation").default(false),
+});
+
+// Geofence alerts for policy violations
+export const geofenceAlerts = pgTable("geofence_alerts", {
+  id: serial("id").primaryKey(),
+  deviceId: integer("device_id").notNull().references(() => devices.id),
+  geofenceId: integer("geofence_id").notNull().references(() => geofences.id),
+  policyId: integer("policy_id").notNull().references(() => locationPolicies.id),
+  alertType: varchar("alert_type", { length: 50 }).notNull(), // 'entry', 'exit', 'violation'
+  message: text("message").notNull(),
+  isRead: boolean("is_read").default(false),
+  timestamp: timestamp("timestamp").defaultNow(),
+});
+
 // Schema validation
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -95,6 +145,42 @@ export const insertChatMessageSchema = createInsertSchema(chatMessages).pick({
   message: true,
 });
 
+export const insertGeofenceSchema = createInsertSchema(geofences).pick({
+  name: true,
+  description: true,
+  latitude: true,
+  longitude: true,
+  radius: true,
+  isActive: true,
+});
+
+export const insertLocationPolicySchema = createInsertSchema(locationPolicies).pick({
+  name: true,
+  description: true,
+  geofenceId: true,
+  policyType: true,
+  actions: true,
+  isActive: true,
+});
+
+export const insertDeviceLocationHistorySchema = createInsertSchema(deviceLocationHistory).pick({
+  deviceId: true,
+  latitude: true,
+  longitude: true,
+  accuracy: true,
+  geofenceId: true,
+  policyViolation: true,
+});
+
+export const insertGeofenceAlertSchema = createInsertSchema(geofenceAlerts).pick({
+  deviceId: true,
+  geofenceId: true,
+  policyId: true,
+  alertType: true,
+  message: true,
+  isRead: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -105,6 +191,14 @@ export type InsertDeviceCommand = z.infer<typeof insertDeviceCommandSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type DeviceLog = typeof deviceLogs.$inferSelect;
+export type Geofence = typeof geofences.$inferSelect;
+export type InsertGeofence = z.infer<typeof insertGeofenceSchema>;
+export type LocationPolicy = typeof locationPolicies.$inferSelect;
+export type InsertLocationPolicy = z.infer<typeof insertLocationPolicySchema>;
+export type DeviceLocationHistory = typeof deviceLocationHistory.$inferSelect;
+export type InsertDeviceLocationHistory = z.infer<typeof insertDeviceLocationHistorySchema>;
+export type GeofenceAlert = typeof geofenceAlerts.$inferSelect;
+export type InsertGeofenceAlert = z.infer<typeof insertGeofenceAlertSchema>;
 
 // Kiosk Config Type
 export type KioskConfig = {
@@ -115,4 +209,16 @@ export type KioskConfig = {
   disableSettings: boolean;
   disableStatusBar: boolean;
   exitCode?: string;
-}
+};
+
+// Location Policy Actions Type
+export type LocationPolicyActions = {
+  lockDevice?: boolean;
+  sendAlert?: boolean;
+  notifyAdmin?: boolean;
+  restrictApps?: string[];
+  enableKiosk?: boolean;
+  logLocation?: boolean;
+  requireWifi?: boolean;
+  disableCamera?: boolean;
+};
