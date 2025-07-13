@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,26 +12,56 @@ import { Textarea } from "@/components/ui/textarea";
 import { Shield, Wifi, Bluetooth, Camera, Lock, Phone, FileText, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface Policy {
   id: number;
   name: string;
   description: string;
-  settings: {
-    wifi: boolean;
-    bluetooth: boolean;
-    camera: boolean;
-    usb: boolean;
-    microphone: boolean;
-    location: boolean;
-    screenCapture: boolean;
-    appInstall: boolean;
-    webFiltering: boolean;
-    callRestrictions: boolean;
-  };
-  enforcementLevel: "strict" | "moderate" | "flexible";
+  enforcementLevel: "strict" | "moderate" | "lenient";
   appliedDevices: number;
-  createdAt: Date;
+  rules: PolicyRules;
+}
+
+interface PolicyRules {
+  passwordRequired: boolean;
+  minPasswordLength: number;
+  biometricRequired: boolean;
+  appWhitelist: string[];
+  cameraDisabled: boolean;
+  usbDebuggingDisabled: boolean;
+  unknownSourcesDisabled: boolean;
+  encryptionRequired: boolean;
+  maxFailedAttempts: number;
+  screenTimeoutMinutes: number;
+  wifiRestrictions: string[];
+  locationRequired: boolean;
+  backupRequired: boolean;
+  autoUpdateEnabled: boolean;
+  developerOptionsDisabled: boolean;
+  factoryResetProtection: boolean;
+  secureBootRequired: boolean;
+  rootDetectionEnabled: boolean;
+  malwareProtectionEnabled: boolean;
+  vpnRequired: boolean;
+  bluetoothRestricted: boolean;
+  nfcDisabled: boolean;
+  hotspotDisabled: boolean;
+  screenCaptureDisabled: boolean;
+  keyguardDisabled: boolean;
+  statusBarDisabled: boolean;
+  systemAppsDisabled: string[];
+  networkRestrictions: string[];
+  timeRestrictions: {
+    enabled: boolean;
+    allowedHours: { start: string; end: string };
+    weekendsAllowed: boolean;
+  };
+  complianceActions: {
+    nonCompliantAction: string;
+    gracePeriodHours: number;
+    adminNotification: boolean;
+  };
 }
 
 export function PolicyManagement() {
@@ -42,49 +71,38 @@ export function PolicyManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Mock policies data - in real app this would come from API
-  const mockPolicies: Policy[] = [
-    {
-      id: 1,
-      name: "High Security - Enterprise",
-      description: "Maximum security for corporate devices",
-      settings: {
-        wifi: true,
-        bluetooth: false,
-        camera: false,
-        usb: false,
-        microphone: false,
-        location: true,
-        screenCapture: false,
-        appInstall: false,
-        webFiltering: true,
-        callRestrictions: true,
-      },
-      enforcementLevel: "strict",
-      appliedDevices: 45,
-      createdAt: new Date(),
+  const { data: policies = [], isLoading } = useQuery({
+    queryKey: ["/api/policies"],
+    queryFn: () => apiRequest("GET", "/api/policies"),
+  });
+
+  const createPolicyMutation = useMutation({
+    mutationFn: (policy: Omit<Policy, "id">) => apiRequest("POST", "/api/policies", policy),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/policies"] });
     },
-    {
-      id: 2,
-      name: "Standard - BYOD",
-      description: "Balanced security for bring-your-own devices",
-      settings: {
-        wifi: true,
-        bluetooth: true,
-        camera: true,
-        usb: true,
-        microphone: true,
-        location: true,
-        screenCapture: true,
-        appInstall: true,
-        webFiltering: true,
-        callRestrictions: false,
-      },
-      enforcementLevel: "moderate",
-      appliedDevices: 23,
-      createdAt: new Date(),
+  });
+
+  const updatePolicyMutation = useMutation({
+    mutationFn: ({ id, ...policy }: Policy) => apiRequest("PUT", `/api/policies/${id}`, policy),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/policies"] });
     },
-  ];
+  });
+
+  const deletePolicyMutation = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/policies/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/policies"] });
+      setSelectedPolicy(null);
+    },
+  });
+
+  useEffect(() => {
+    if (policies.length > 0 && !selectedPolicy) {
+      setSelectedPolicy(policies[0]);
+    }
+  }, [policies, selectedPolicy]);
 
   const getEnforcementBadge = (level: string) => {
     switch (level) {
@@ -118,9 +136,6 @@ export function PolicyManagement() {
       <CardContent>
         <div className="flex items-center justify-between text-sm">
           <span className="text-gray-600">Applied to {policy.appliedDevices} devices</span>
-          <span className="text-gray-500">
-            {policy.createdAt.toLocaleDateString()}
-          </span>
         </div>
       </CardContent>
     </Card>
@@ -128,34 +143,7 @@ export function PolicyManagement() {
 
   const PolicySettings = ({ policy }: { policy: Policy }) => (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {Object.entries(policy.settings).map(([key, value]) => {
-          const icons = {
-            wifi: Wifi,
-            bluetooth: Bluetooth,
-            camera: Camera,
-            usb: FileText,
-            microphone: Phone,
-            location: Shield,
-            screenCapture: Camera,
-            appInstall: Shield,
-            webFiltering: Shield,
-            callRestrictions: Phone,
-          };
-          
-          const Icon = icons[key as keyof typeof icons] || Shield;
-          
-          return (
-            <div key={key} className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center space-x-3">
-                <Icon size={20} className="text-gray-600" />
-                <Label className="capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</Label>
-              </div>
-              <Switch checked={value} disabled />
-            </div>
-          );
-        })}
-      </div>
+      Policy Settings
     </div>
   );
 
@@ -180,7 +168,7 @@ export function PolicyManagement() {
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      
+
       if (!formData.name.trim()) {
         toast({
           title: "Error",
@@ -195,7 +183,7 @@ export function PolicyManagement() {
         title: "Success",
         description: "Policy created successfully",
       });
-      
+
       onClose();
     };
 
@@ -222,7 +210,7 @@ export function PolicyManagement() {
               required
             />
           </div>
-          
+
           <div>
             <Label htmlFor="description">Description</Label>
             <Textarea
@@ -233,11 +221,11 @@ export function PolicyManagement() {
               rows={3}
             />
           </div>
-          
+
           <div>
             <Label htmlFor="enforcementLevel">Enforcement Level</Label>
-            <Select 
-              value={formData.enforcementLevel} 
+            <Select
+              value={formData.enforcementLevel}
               onValueChange={(value) => setFormData(prev => ({ ...prev, enforcementLevel: value as any }))}
             >
               <SelectTrigger>
@@ -268,9 +256,9 @@ export function PolicyManagement() {
                 webFiltering: Shield,
                 callRestrictions: Phone,
               };
-              
+
               const Icon = icons[key as keyof typeof icons] || Shield;
-              
+
               return (
                 <div key={key} className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex items-center space-x-3">
@@ -279,8 +267,8 @@ export function PolicyManagement() {
                       {key.replace(/([A-Z])/g, ' $1').trim()}
                     </Label>
                   </div>
-                  <Switch 
-                    checked={value} 
+                  <Switch
+                    checked={value}
                     onCheckedChange={(checked) => handleSettingChange(key, checked)}
                   />
                 </div>
@@ -332,28 +320,32 @@ export function PolicyManagement() {
               <CardTitle>Security Policies</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {mockPolicies.map((policy) => (
-                <div
-                  key={policy.id}
-                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                    selectedPolicy?.id === policy.id
-                      ? "border-primary bg-primary/5"
-                      : "hover:bg-gray-50 dark:hover:bg-gray-700"
-                  }`}
-                  onClick={() => setSelectedPolicy(policy)}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium">{policy.name}</h3>
-                    {getEnforcementBadge(policy.enforcementLevel)}
+              {isLoading ? (
+                <div>Loading policies...</div>
+              ) : (
+                policies.map((policy) => (
+                  <div
+                    key={policy.id}
+                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                      selectedPolicy?.id === policy.id
+                        ? "border-primary bg-primary/5"
+                        : "hover:bg-gray-50 dark:hover:bg-gray-700"
+                    }`}
+                    onClick={() => setSelectedPolicy(policy)}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-medium">{policy.name}</h3>
+                      {getEnforcementBadge(policy.enforcementLevel)}
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      {policy.description}
+                    </p>
+                    <span className="text-xs text-gray-500">
+                      {policy.appliedDevices} devices
+                    </span>
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    {policy.description}
-                  </p>
-                  <span className="text-xs text-gray-500">
-                    {policy.appliedDevices} devices
-                  </span>
-                </div>
-              ))}
+                ))
+              )}
             </CardContent>
           </Card>
         </div>
@@ -385,11 +377,11 @@ export function PolicyManagement() {
                     <TabsTrigger value="devices">Applied Devices</TabsTrigger>
                     <TabsTrigger value="analytics">Analytics</TabsTrigger>
                   </TabsList>
-                  
+
                   <TabsContent value="settings">
                     <PolicySettings policy={selectedPolicy} />
                   </TabsContent>
-                  
+
                   <TabsContent value="devices">
                     <div className="text-center py-8">
                       <p className="text-gray-500">
@@ -397,7 +389,7 @@ export function PolicyManagement() {
                       </p>
                     </div>
                   </TabsContent>
-                  
+
                   <TabsContent value="analytics">
                     <div className="text-center py-8">
                       <p className="text-gray-500">

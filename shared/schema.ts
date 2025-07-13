@@ -205,6 +205,61 @@ export type DeviceCommand = typeof deviceCommands.$inferSelect;
 export type InsertDeviceCommand = z.infer<typeof insertDeviceCommandSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+
+// Policy schema (basic structure for now)
+export const policySchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  description: z.string(),
+  enforcementLevel: z.enum(["strict", "moderate", "lenient"]),
+  appliedDevices: z.number(),
+  rules: z.object({
+    passwordRequired: z.boolean(),
+    minPasswordLength: z.number(),
+    biometricRequired: z.boolean(),
+    appWhitelist: z.array(z.string()),
+    cameraDisabled: z.boolean(),
+    usbDebuggingDisabled: z.boolean(),
+    unknownSourcesDisabled: z.boolean(),
+    encryptionRequired: z.boolean(),
+    maxFailedAttempts: z.number(),
+    screenTimeoutMinutes: z.number(),
+    wifiRestrictions: z.array(z.string()),
+    locationRequired: z.boolean(),
+    backupRequired: z.boolean(),
+    autoUpdateEnabled: z.boolean(),
+    developerOptionsDisabled: z.boolean(),
+    factoryResetProtection: z.boolean(),
+    secureBootRequired: z.boolean(),
+    rootDetectionEnabled: z.boolean(),
+    malwareProtectionEnabled: z.boolean(),
+    vpnRequired: z.boolean(),
+    bluetoothRestricted: z.boolean(),
+    nfcDisabled: z.boolean(),
+    hotspotDisabled: z.boolean(),
+    screenCaptureDisabled: z.boolean(),
+    keyguardDisabled: z.boolean(),
+    statusBarDisabled: z.boolean(),
+    systemAppsDisabled: z.array(z.string()),
+    networkRestrictions: z.array(z.string()),
+    timeRestrictions: z.object({
+      enabled: z.boolean(),
+      allowedHours: z.object({
+        start: z.string(),
+        end: z.string()
+      }),
+      weekendsAllowed: z.boolean()
+    }),
+    complianceActions: z.object({
+      nonCompliantAction: z.string(),
+      gracePeriodHours: z.number(),
+      adminNotification: z.boolean()
+    })
+  })
+});
+
+export type Policy = z.infer<typeof policySchema>;
+export const insertPolicySchema = policySchema.omit({ id: true });
 export type DeviceLog = typeof deviceLogs.$inferSelect;
 export type Geofence = typeof geofences.$inferSelect;
 export type InsertGeofence = z.infer<typeof insertGeofenceSchema>;

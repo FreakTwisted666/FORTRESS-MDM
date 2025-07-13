@@ -572,6 +572,47 @@ Enterprise features: SSO authentication, device control rules, policy enforcemen
     }
   });
 
+  // Policy management endpoints
+  app.get("/api/policies", async (req, res) => {
+    try {
+      const policies = await storage.getPolicies();
+      res.json(policies);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch policies" });
+    }
+  });
+
+  app.post("/api/policies", async (req, res) => {
+    try {
+      const policyData = req.body;
+      const policy = await storage.createPolicy(policyData);
+      res.status(201).json(policy);
+    } catch (error) {
+      res.status(400).json({ message: "Failed to create policy" });
+    }
+  });
+
+  app.put("/api/policies/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const policy = await storage.updatePolicy(id, updates);
+      res.json(policy);
+    } catch (error) {
+      res.status(400).json({ message: "Failed to update policy" });
+    }
+  });
+
+  app.delete("/api/policies/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deletePolicy(id);
+      res.json({ message: "Policy deleted successfully" });
+    } catch (error) {
+      res.status(400).json({ message: "Failed to delete policy" });
+    }
+  });
+
   // Stats endpoint
   app.get("/api/stats", async (req, res) => {
     try {

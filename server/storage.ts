@@ -93,74 +93,9 @@ export class MemStorage implements IStorage {
 
   constructor() {
     // Initialize with demo devices
-    this.initializeDemoDevices();
+    
   }
 
-  private initializeDemoDevices() {
-    const now = new Date();
-    const devices = [
-      {
-        name: "Samsung Galaxy Tab A8",
-        imei: "352033111234567",
-        serialNumber: null,
-        deviceType: "android",
-        status: "online",
-        batteryLevel: 85,
-        lastSeen: new Date(now.getTime() - 2 * 60 * 1000), // 2 minutes ago
-        location: "New York, NY",
-        osVersion: "Android 13",
-        appVersion: "1.0.0",
-        fcmToken: "fcm_token_1",
-        isKioskMode: true,
-        kioskAppPackage: "com.fortress.kiosk",
-        policies: { wifi: true, bluetooth: false, camera: false },
-        enrolledAt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-        updatedAt: new Date(now.getTime() - 2 * 60 * 1000),
-      },
-      {
-        name: "iPad Pro 11-inch",
-        imei: null,
-        serialNumber: "DLXKXXXXX",
-        deviceType: "ios",
-        status: "offline",
-        batteryLevel: 15,
-        lastSeen: new Date(now.getTime() - 3 * 60 * 60 * 1000), // 3 hours ago
-        location: "San Francisco, CA",
-        osVersion: "iOS 17.1",
-        appVersion: "1.0.0",
-        fcmToken: "fcm_token_2",
-        isKioskMode: false,
-        kioskAppPackage: null,
-        policies: { wifi: true, bluetooth: true, camera: true },
-        enrolledAt: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000), // 14 days ago
-        updatedAt: new Date(now.getTime() - 3 * 60 * 60 * 1000),
-      },
-      {
-        name: "Google Pixel 7",
-        imei: "352033111234568",
-        serialNumber: null,
-        deviceType: "android",
-        status: "warning",
-        batteryLevel: 42,
-        lastSeen: new Date(now.getTime() - 15 * 60 * 1000), // 15 minutes ago
-        location: "Chicago, IL",
-        osVersion: "Android 14",
-        appVersion: "1.0.0",
-        fcmToken: "fcm_token_3",
-        isKioskMode: true,
-        kioskAppPackage: "com.fortress.kiosk",
-        policies: { wifi: true, bluetooth: false, camera: false },
-        enrolledAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-        updatedAt: new Date(now.getTime() - 15 * 60 * 1000),
-      }
-    ];
-
-    devices.forEach(device => {
-      const id = this.currentDeviceId++;
-      const deviceWithId = { ...device, id } as Device;
-      this.devices.set(id, deviceWithId);
-    });
-  }
 
   // User operations for Replit Auth
   async getUser(id: string): Promise<User | undefined> {
