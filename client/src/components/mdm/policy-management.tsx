@@ -8,7 +8,9 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Wifi, Bluetooth, Camera, Lock, Phone, FileText } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Shield, Wifi, Bluetooth, Camera, Lock, Phone, FileText, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -36,6 +38,7 @@ interface Policy {
 export function PolicyManagement() {
   const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [createPolicyOpen, setCreatePolicyOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -156,6 +159,148 @@ export function PolicyManagement() {
     </div>
   );
 
+  const CreatePolicyForm = ({ onClose }: { onClose: () => void }) => {
+    const [formData, setFormData] = useState({
+      name: "",
+      description: "",
+      enforcementLevel: "moderate" as const,
+      settings: {
+        wifi: true,
+        bluetooth: true,
+        camera: true,
+        usb: true,
+        microphone: true,
+        location: true,
+        screenCapture: true,
+        appInstall: false,
+        webFiltering: false,
+        callRestrictions: false,
+      },
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      
+      if (!formData.name.trim()) {
+        toast({
+          title: "Error",
+          description: "Policy name is required",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // In a real app, this would call the API
+      toast({
+        title: "Success",
+        description: "Policy created successfully",
+      });
+      
+      onClose();
+    };
+
+    const handleSettingChange = (key: string, value: boolean) => {
+      setFormData(prev => ({
+        ...prev,
+        settings: {
+          ...prev.settings,
+          [key]: value,
+        },
+      }));
+    };
+
+    return (
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="name">Policy Name</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Enter policy name"
+              required
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              placeholder="Enter policy description"
+              rows={3}
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="enforcementLevel">Enforcement Level</Label>
+            <Select 
+              value={formData.enforcementLevel} 
+              onValueChange={(value) => setFormData(prev => ({ ...prev, enforcementLevel: value as any }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="strict">Strict</SelectItem>
+                <SelectItem value="moderate">Moderate</SelectItem>
+                <SelectItem value="flexible">Flexible</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div>
+          <Label>Security Settings</Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            {Object.entries(formData.settings).map(([key, value]) => {
+              const icons = {
+                wifi: Wifi,
+                bluetooth: Bluetooth,
+                camera: Camera,
+                usb: FileText,
+                microphone: Phone,
+                location: Shield,
+                screenCapture: Camera,
+                appInstall: Shield,
+                webFiltering: Shield,
+                callRestrictions: Phone,
+              };
+              
+              const Icon = icons[key as keyof typeof icons] || Shield;
+              
+              return (
+                <div key={key} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <Icon size={16} className="text-gray-600" />
+                    <Label className="capitalize text-sm">
+                      {key.replace(/([A-Z])/g, ' $1').trim()}
+                    </Label>
+                  </div>
+                  <Switch 
+                    checked={value} 
+                    onCheckedChange={(checked) => handleSettingChange(key, checked)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex justify-end space-x-3">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit">
+            Create Policy
+          </Button>
+        </div>
+      </form>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -163,10 +308,20 @@ export function PolicyManagement() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Policy Management</h1>
           <p className="text-gray-600 dark:text-gray-400">Create and manage device security policies</p>
         </div>
-        <Button>
-          <Shield className="mr-2" size={16} />
-          Create Policy
-        </Button>
+        <Dialog open={createPolicyOpen} onOpenChange={setCreatePolicyOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2" size={16} />
+              Create Policy
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Create Security Policy</DialogTitle>
+            </DialogHeader>
+            <CreatePolicyForm onClose={() => setCreatePolicyOpen(false)} />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">

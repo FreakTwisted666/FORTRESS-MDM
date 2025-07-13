@@ -253,7 +253,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         deviceId,
         command: `emergency_${action}`,
         status: "pending",
-        issuedBy: 1, // Admin user
+        issuedBy: "admin", // Admin user
       });
       
       // Log the emergency action

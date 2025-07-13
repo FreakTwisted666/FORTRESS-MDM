@@ -52,7 +52,7 @@ export const deviceCommands = pgTable("device_commands", {
   deviceId: integer("device_id").references(() => devices.id),
   command: text("command").notNull(), // lock, reboot, wipe, refresh_config
   status: text("status").notNull().default("pending"), // pending, sent, completed, failed
-  issuedBy: integer("issued_by").references(() => users.id),
+  issuedBy: varchar("issued_by").references(() => users.id),
   issuedAt: timestamp("issued_at").defaultNow(),
   completedAt: timestamp("completed_at"),
   response: jsonb("response"),
@@ -61,7 +61,7 @@ export const deviceCommands = pgTable("device_commands", {
 // Chat messages table for the MDM assistant
 export const chatMessages = pgTable("chat_messages", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
+  userId: varchar("user_id").references(() => users.id),
   message: text("message").notNull(),
   response: text("response"),
   timestamp: timestamp("timestamp").defaultNow(),

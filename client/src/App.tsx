@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
+import Devices from "@/pages/devices";
 import Applications from "@/pages/applications";
 import Policies from "@/pages/policies";
 import Analytics from "@/pages/analytics";
@@ -28,7 +29,7 @@ function Router() {
       <Route path="/policies" component={isAuthenticated ? Policies : Landing} />
       <Route path="/analytics" component={isAuthenticated ? Analytics : Landing} />
       <Route path="/kiosk" component={isAuthenticated ? Kiosk : Landing} />
-      <Route path="/devices" component={isAuthenticated ? Dashboard : Landing} />
+      <Route path="/devices" component={isAuthenticated ? Devices : Landing} />
       <Route path="/users" component={isAuthenticated ? Dashboard : Landing} />
       <Route path="/alerts" component={isAuthenticated ? Dashboard : Landing} />
       <Route component={NotFound} />
