@@ -208,3 +208,12 @@ Changelog:
   - Fixed TypeScript errors and completed DatabaseStorage implementation
   - Authentication middleware properly returns 401 for unauthorized requests
   - System ready for production deployment with secure Replit-based authentication
+- July 13, 2025. Reverted to Username/Password Authentication:
+  - Replaced Replit Auth with traditional username/password login form
+  - Created new auth.ts module with session-based authentication
+  - Updated landing page with username/password form using react-hook-form
+  - Added login/logout API endpoints with session management
+  - Fixed React hooks ordering issue in App.tsx Router component
+  - Maintained secure session storage using PostgreSQL
+  - Added logout functionality to header component
+  - System now uses standard login credentials for authentication

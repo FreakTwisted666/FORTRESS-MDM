@@ -16,23 +16,21 @@ import NotFound from "@/pages/not-found";
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
-        <>
-          <Route path="/" component={Dashboard} />
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/applications" component={Applications} />
-          <Route path="/policies" component={Policies} />
-          <Route path="/analytics" component={Analytics} />
-          <Route path="/kiosk" component={Kiosk} />
-          <Route path="/devices" component={Dashboard} />
-          <Route path="/users" component={Dashboard} />
-          <Route path="/alerts" component={Dashboard} />
-        </>
-      )}
+      <Route path="/" component={isAuthenticated ? Dashboard : Landing} />
+      <Route path="/dashboard" component={isAuthenticated ? Dashboard : Landing} />
+      <Route path="/applications" component={isAuthenticated ? Applications : Landing} />
+      <Route path="/policies" component={isAuthenticated ? Policies : Landing} />
+      <Route path="/analytics" component={isAuthenticated ? Analytics : Landing} />
+      <Route path="/kiosk" component={isAuthenticated ? Kiosk : Landing} />
+      <Route path="/devices" component={isAuthenticated ? Dashboard : Landing} />
+      <Route path="/users" component={isAuthenticated ? Dashboard : Landing} />
+      <Route path="/alerts" component={isAuthenticated ? Dashboard : Landing} />
       <Route component={NotFound} />
     </Switch>
   );
