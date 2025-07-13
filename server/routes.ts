@@ -463,6 +463,22 @@ Enterprise features: SSO authentication, device control rules, policy enforcemen
     }
   });
 
+  // QR code enrollment data endpoint
+  app.get('/api/enrollment/qr-data', async (req, res) => {
+    try {
+      const enrollmentData = {
+        serverUrl: `${req.protocol}://${req.get('host')}`,
+        enrollmentCode: process.env.MDM_ENROLLMENT_CODE || 'DEMO-CODE-123',
+        apiVersion: '1.0.0',
+        supportedDevices: ['android', 'ios']
+      };
+      
+      res.json(enrollmentData);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to generate QR data' });
+    }
+  });
+
   // Mobile device enrollment endpoint
   app.post('/api/enroll', async (req, res) => {
     try {
