@@ -52,7 +52,7 @@ class MDMService {
     // Check if device is already enrolled
     const token = await AsyncStorage.getItem('device_token');
     const serverUrl = await AsyncStorage.getItem('server_url');
-    
+
     if (token && serverUrl) {
       this.deviceToken = token;
       this.serverUrl = serverUrl;
@@ -65,7 +65,7 @@ class MDMService {
   async enrollDevice(serverUrl: string, enrollmentCode: string): Promise<boolean> {
     try {
       const deviceInfo = await this.getDeviceInfo();
-      
+
       const response = await fetch(`${serverUrl}/api/enroll`, {
         method: 'POST',
         headers: {
@@ -86,7 +86,7 @@ class MDMService {
         // Store enrollment data
         await AsyncStorage.setItem('device_token', this.deviceToken);
         await AsyncStorage.setItem('server_url', serverUrl);
-        
+
         this.startHeartbeat();
         return true;
       }
@@ -131,7 +131,7 @@ class MDMService {
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
       );
-      
+
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
         return new Promise((resolve) => {
           Geolocation.getCurrentPosition(
@@ -174,7 +174,7 @@ class MDMService {
 
     try {
       const deviceStatus = await this.getDeviceInfo();
-      
+
       const response = await fetch(`${this.serverUrl}/api/device/status`, {
         method: 'POST',
         headers: {
@@ -325,7 +325,7 @@ class MDMService {
       if (appPackage) {
         await AsyncStorage.setItem('kiosk_app', appPackage);
       }
-      
+
       const { KioskModule } = require('../native/KioskModule');
       return await KioskModule.enterKioskMode(appPackage);
     } catch (error) {
@@ -338,7 +338,7 @@ class MDMService {
     try {
       await AsyncStorage.setItem('kiosk_mode', 'false');
       await AsyncStorage.removeItem('kiosk_app');
-      
+
       const { KioskModule } = require('../native/KioskModule');
       return await KioskModule.exitKioskMode();
     } catch (error) {
@@ -379,7 +379,7 @@ class MDMService {
 
     this.heartbeatInterval = setInterval(async () => {
       await this.sendDeviceStatus();
-      
+
       // Check for pending commands
       const commands = await this.checkForCommands();
       for (const command of commands) {
@@ -414,11 +414,11 @@ class MDMService {
       await AsyncStorage.removeItem('server_url');
       await AsyncStorage.removeItem('kiosk_mode');
       await AsyncStorage.removeItem('kiosk_app');
-      
+
       this.stopHeartbeat();
       this.isEnrolled = false;
       this.deviceToken = null;
-      
+
       return true;
     } catch (error) {
       console.error('Unenroll failed:', error);
@@ -426,5 +426,9 @@ class MDMService {
     }
   }
 }
+
+// Production configuration
+const DEFAULT_SERVER_URL = process.env.REPLIT_DEV_DOMAIN || 'https://your-repl-name.your-username.replit.app';
+const DEFAULT_ENROLLMENT_CODE = 'FORTRESS-ENTERPRISE-2025-SECURE';
 
 export default MDMService;
