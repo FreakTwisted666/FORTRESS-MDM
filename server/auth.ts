@@ -42,13 +42,16 @@ export async function setupAuth(app: Express) {
 
       // Check for default admin credentials
       if (username === "admin" && password === "admin") {
-        const user = await storage.upsertUser({
-          id: "admin",
-          email: "admin@fortress.com",
-          firstName: "Admin",
-          lastName: "User",
-          profileImageUrl: null,
-        });
+        let user = await storage.getUser("admin");
+        if (!user) {
+          user = await storage.upsertUser({
+            id: "admin",
+            email: "admin@fortress.com",
+            firstName: "Admin",
+            lastName: "User",
+            profileImageUrl: null,
+          });
+        }
 
         (req.session as any).user = user;
         return res.json({ user });
@@ -56,13 +59,16 @@ export async function setupAuth(app: Express) {
 
       // For demo purposes, allow any username with password "password"
       if (password === "password") {
-        const user = await storage.upsertUser({
-          id: username,
-          email: `${username}@fortress.com`,
-          firstName: username.charAt(0).toUpperCase() + username.slice(1),
-          lastName: "User",
-          profileImageUrl: null,
-        });
+        let user = await storage.getUser(username);
+        if (!user) {
+          user = await storage.upsertUser({
+            id: username,
+            email: `${username}@fortress.com`,
+            firstName: username.charAt(0).toUpperCase() + username.slice(1),
+            lastName: "User",
+            profileImageUrl: null,
+          });
+        }
 
         (req.session as any).user = user;
         return res.json({ user });

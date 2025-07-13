@@ -31,10 +31,7 @@ export default function Landing() {
   });
 
   const loginMutation = useMutation({
-    mutationFn: (data: LoginForm) => apiRequest("/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
+    mutationFn: (data: LoginForm) => apiRequest("POST", "/api/auth/login", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       toast({

@@ -10,9 +10,7 @@ export function useAuth() {
   });
 
   const logoutMutation = useMutation({
-    mutationFn: () => apiRequest("/api/auth/logout", {
-      method: "POST",
-    }),
+    mutationFn: () => apiRequest("POST", "/api/auth/logout"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
     },
