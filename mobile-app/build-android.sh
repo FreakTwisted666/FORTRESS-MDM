@@ -21,6 +21,7 @@ fi
 # 3. Build debug APK
 echo "🔨 Building debug APK..."
 cd android
+./gradlew clean
 ./gradlew assembleDebug
 cd ..
 
@@ -29,6 +30,16 @@ echo "🚀 Building release APK..."
 cd android
 ./gradlew assembleRelease
 cd ..
+
+# 5. Production readiness checks
+echo "🔍 Running production checks..."
+if grep -r "FORTRESS-MDM-2025" ../src --exclude-dir=node_modules; then
+    echo "⚠️  Default enrollment code found. Update for production!"
+fi
+
+if grep -r "YOUR_SERVER_URL" ../src --exclude-dir=node_modules; then
+    echo "⚠️  Default server URL found. Update for production!"
+fi
 
 echo "✅ Android build completed!"
 echo ""

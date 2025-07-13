@@ -1,40 +1,37 @@
+
 package com.fortressmdm.mobile;
 
 import android.app.admin.DeviceAdminReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
+import android.widget.Toast;
 
-public class DeviceAdminReceiver extends android.app.admin.DeviceAdminReceiver {
-    private static final String TAG = "FortressMDM";
-
+public class FortressDeviceAdminReceiver extends DeviceAdminReceiver {
+    
     @Override
     public void onEnabled(Context context, Intent intent) {
         super.onEnabled(context, intent);
-        Log.d(TAG, "Device admin enabled");
-    }
-
-    @Override
-    public CharSequence onDisableRequested(Context context, Intent intent) {
-        Log.d(TAG, "Device admin disable requested");
-        return "Warning: Disabling device admin will remove MDM management capabilities";
+        Toast.makeText(context, "Fortress MDM Device Admin Enabled", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onDisabled(Context context, Intent intent) {
         super.onDisabled(context, intent);
-        Log.d(TAG, "Device admin disabled");
+        Toast.makeText(context, "Fortress MDM Device Admin Disabled", Toast.LENGTH_SHORT).show();
     }
 
     @Override
-    public void onLockTaskModeEntering(Context context, Intent intent, String pkg) {
-        super.onLockTaskModeEntering(context, intent, pkg);
-        Log.d(TAG, "Entering lock task mode: " + pkg);
+    public void onPasswordChanged(Context context, Intent intent) {
+        super.onPasswordChanged(context, intent);
     }
 
     @Override
-    public void onLockTaskModeExiting(Context context, Intent intent) {
-        super.onLockTaskModeExiting(context, intent);
-        Log.d(TAG, "Exiting lock task mode");
+    public void onPasswordFailed(Context context, Intent intent) {
+        super.onPasswordFailed(context, intent);
+    }
+
+    @Override
+    public void onPasswordSucceeded(Context context, Intent intent) {
+        super.onPasswordSucceeded(context, intent);
     }
 }
