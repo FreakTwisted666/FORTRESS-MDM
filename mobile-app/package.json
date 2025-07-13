@@ -1,6 +1,6 @@
 {
   "name": "fortress-mdm-mobile",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Fortress MDM Mobile Client - Android Device Management",
   "main": "index.js",
   "scripts": {

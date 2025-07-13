@@ -26,22 +26,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const deviceId = parseInt(req.params.id);
       const { enabled, config } = req.body;
-      
+
       const updates = {
         isKioskMode: enabled,
         kioskConfig: config || {},
         updatedAt: new Date()
       };
-      
+
       const updatedDevice = await storage.updateDevice(deviceId, updates);
-      
+
       // Log the kiosk action
       await storage.createDeviceLog({
         deviceId,
         action: enabled ? "kiosk_enabled" : "kiosk_disabled",
         details: { config }
       });
-      
+
       res.json(updatedDevice);
     } catch (error) {
       res.status(500).json({ message: "Failed to update kiosk mode" });
@@ -53,27 +53,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const deviceId = parseInt(req.params.id);
       const { action, enabled } = req.body;
-      
+
       // Validate control actions
       const validActions = ['wifi', 'mobile_data', 'gps', 'bluetooth', 'camera', 'microphone', 'usb'];
       if (!validActions.includes(action)) {
         return res.status(400).json({ message: "Invalid control action" });
       }
-      
+
       // Create device command for the control action
       await storage.createDeviceCommand({
         deviceId,
         command: `${action}_${enabled ? 'enable' : 'disable'}`,
         status: "pending"
       });
-      
+
       // Log the control action
       await storage.createDeviceLog({
         deviceId,
         action: `${action}_${enabled ? 'enabled' : 'disabled'}`,
         details: { action, enabled }
       });
-      
+
       res.json({ 
         message: `${action} ${enabled ? 'enabled' : 'disabled'} successfully`,
         command: `${action}_${enabled ? 'enable' : 'disable'}`
@@ -87,13 +87,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/devices/bulk/controls", async (req, res) => {
     try {
       const { deviceIds, controls } = req.body;
-      
+
       if (!Array.isArray(deviceIds) || !controls) {
         return res.status(400).json({ message: "Invalid request format" });
       }
-      
+
       const results = [];
-      
+
       for (const deviceId of deviceIds) {
         for (const [action, enabled] of Object.entries(controls)) {
           await storage.createDeviceCommand({
@@ -101,17 +101,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             command: `${action}_${enabled ? 'enable' : 'disable'}`,
             status: "pending"
           });
-          
+
           await storage.createDeviceLog({
             deviceId,
             action: `bulk_${action}_${enabled ? 'enabled' : 'disabled'}`,
             details: { action, enabled, bulk: true }
           });
         }
-        
+
         results.push({ deviceId, status: "commands_queued" });
       }
-      
+
       res.json({ 
         message: `Bulk controls applied to ${deviceIds.length} devices`,
         results 
@@ -125,7 +125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/kiosk/enroll", async (req, res) => {
     try {
       const { imei, fcmToken, deviceInfo } = req.body;
-      
+
       // Create or update kiosk device
       const device = {
         id: `kiosk_${imei}`,
@@ -145,7 +145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           disableStatusBar: true
         }
       };
-      
+
       res.json({ success: true, deviceId: device.id });
     } catch (error) {
       res.status(500).json({ message: "Failed to enroll kiosk device" });
@@ -157,10 +157,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { deviceId } = req.params;
       const { config } = req.body;
-      
+
       // Update device configuration
       // This would trigger a Firebase update that the Android app listens to
-      
+
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to update kiosk configuration" });
@@ -237,17 +237,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const deviceId = parseInt(req.params.id);
       const { action, adminPassword, reason } = req.body;
-      
+
       // Validate admin password against environment variable
       if (!adminPassword || adminPassword !== process.env.ADMIN_EMERGENCY_PASSWORD) {
         return res.status(401).json({ message: "Invalid admin password" });
       }
-      
+
       // Validate action
       if (!['lock', 'wipe'].includes(action)) {
         return res.status(400).json({ message: "Invalid emergency action" });
       }
-      
+
       // Create emergency command
       const emergencyCommand = await storage.createDeviceCommand({
         deviceId,
@@ -255,7 +255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "pending",
         issuedBy: "admin", // Admin user
       });
-      
+
       // Log the emergency action
       await storage.createDeviceLog({
         deviceId,
@@ -267,7 +267,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           adminPassword: '***' // Never log actual passwords
         }
       });
-      
+
       res.json({ 
         message: `Emergency ${action} command sent successfully`,
         commandId: emergencyCommand.id
@@ -285,20 +285,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         deviceId,
       });
-      
+
       const deviceCommand = await storage.createDeviceCommand({
         deviceId,
         command,
         issuedBy,
       });
-      
+
       // Log the command
       await storage.createDeviceLog({
         deviceId,
         action: `command_issued_${command}`,
         details: { commandId: deviceCommand.id, issuedBy },
       });
-      
+
       res.status(201).json(deviceCommand);
     } catch (error) {
       res.status(400).json({ message: "Failed to create device command" });
@@ -329,12 +329,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/chat", async (req, res) => {
     try {
       const { message, userId } = insertChatMessageSchema.parse(req.body);
-      
+
       // Process the chat message and generate a response
       let response = "I'm here to help with enterprise device management. ";
-      
+
       const lowerMessage = message.toLowerCase();
-      
+
       // Kiosk management commands
       if (lowerMessage.includes("kiosk") && (lowerMessage.includes("enable") || lowerMessage.includes("activate"))) {
         const devices = await storage.getDevices();
@@ -448,15 +448,15 @@ Enterprise features: SSO authentication, device control rules, policy enforcemen
       } else {
         response += "Try commands like 'show device status', 'enable wifi on [IMEI]', 'configure kiosk mode', or 'help' for more options.";
       }
-      
+
       const chatMessage = await storage.createChatMessage({
         userId,
         message,
       });
-      
+
       // Update the chat message with the response
       const updatedChatMessage = { ...chatMessage, response };
-      
+
       res.json(updatedChatMessage);
     } catch (error) {
       res.status(400).json({ message: "Failed to process chat message" });
@@ -472,7 +472,7 @@ Enterprise features: SSO authentication, device control rules, policy enforcemen
         apiVersion: '1.0.0',
         supportedDevices: ['android', 'ios']
       };
-      
+
       res.json(enrollmentData);
     } catch (error) {
       res.status(500).json({ error: 'Failed to generate QR data' });
@@ -483,12 +483,12 @@ Enterprise features: SSO authentication, device control rules, policy enforcemen
   app.post('/api/enroll', async (req, res) => {
     try {
       const { enrollmentCode, deviceInfo } = req.body;
-      
+
       // Validate enrollment code against environment variable
       if (!enrollmentCode || enrollmentCode !== process.env.MDM_ENROLLMENT_CODE) {
         return res.status(400).json({ error: 'Invalid enrollment code' });
       }
-      
+
       // Create device record
       const device = await storage.createDevice({
         name: deviceInfo.deviceName,
@@ -503,17 +503,17 @@ Enterprise features: SSO authentication, device control rules, policy enforcemen
         isKioskMode: false,
         kioskConfig: null,
       });
-      
+
       // Generate device token
       const deviceToken = `device_${device.id}_${Date.now()}`;
-      
+
       // Log enrollment
       await storage.createDeviceLog({
         deviceId: device.id,
         action: 'enrolled',
         details: { token: deviceToken, appVersion: deviceInfo.appVersion }
       });
-      
+
       res.json({ 
         success: true, 
         token: deviceToken,
@@ -533,18 +533,18 @@ Enterprise features: SSO authentication, device control rules, policy enforcemen
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
-      
+
       const token = authHeader.substring(7);
       const deviceInfo = req.body;
-      
+
       // Find device by token
       const devices = await storage.getDevices();
       const device = devices.find(d => token.includes(`device_${d.id}_`));
-      
+
       if (!device) {
         return res.status(404).json({ error: 'Device not found' });
       }
-      
+
       // Update device status
       await storage.updateDevice(device.id, {
         batteryLevel: deviceInfo.batteryLevel,
@@ -553,7 +553,7 @@ Enterprise features: SSO authentication, device control rules, policy enforcemen
         status: deviceInfo.isOnline ? 'online' : 'offline',
         isKioskMode: deviceInfo.isKioskMode,
       });
-      
+
       res.json({ success: true });
     } catch (error) {
       console.error('Device status update error:', error);
@@ -568,19 +568,19 @@ Enterprise features: SSO authentication, device control rules, policy enforcemen
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
-      
+
       const token = authHeader.substring(7);
       const devices = await storage.getDevices();
       const device = devices.find(d => token.includes(`device_${d.id}_`));
-      
+
       if (!device) {
         return res.status(404).json({ error: 'Device not found' });
       }
-      
+
       // Get pending commands
       const commands = await storage.getDeviceCommands(device.id);
       const pendingCommands = commands.filter(cmd => cmd.status === 'pending');
-      
+
       res.json(pendingCommands);
     } catch (error) {
       console.error('Device commands error:', error);
@@ -637,13 +637,13 @@ Enterprise features: SSO authentication, device control rules, policy enforcemen
       const onlineDevices = devices.filter((d: Device) => d.status === "online").length;
       const offlineDevices = devices.filter((d: Device) => d.status === "offline").length;
       const warningDevices = devices.filter((d: Device) => d.status === "warning").length;
-      
+
       // Calculate real policy violations and critical alerts
-      const policyViolations = 0; // No policy violations in production setup
+      const policyViolations = 0; // Clean production start
       const criticalAlerts = devices.filter((d: Device) => 
         d.status === "offline" || (d.batteryLevel !== null && d.batteryLevel < 15)
       ).length;
-      
+
       res.json({
         totalDevices,
         onlineDevices,

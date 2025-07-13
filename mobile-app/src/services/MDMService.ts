@@ -429,6 +429,7 @@ class MDMService {
 
 // Production configuration
 const DEFAULT_SERVER_URL = process.env.REPLIT_DEV_DOMAIN || 'https://your-repl-name.your-username.replit.app';
-const DEFAULT_ENROLLMENT_CODE = 'FORTRESS-ENTERPRISE-2025-SECURE';
+// Production enrollment code - should be set by organization
+const DEFAULT_ENROLLMENT_CODE = 'FORTRESS-PROD-2025';
 
 export default MDMService;

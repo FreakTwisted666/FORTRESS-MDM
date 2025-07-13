@@ -35,13 +35,16 @@ export async function setupAuth(app: Express) {
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { username, password } = req.body;
-      
+
       if (!username || !password) {
         return res.status(400).json({ message: "Username and password are required" });
       }
 
       // Check for default admin credentials
-      if (username === "admin" && password === "admin") {
+      const adminUsername = process.env.ADMIN_USERNAME || 'admin';
+      const adminPassword = process.env.ADMIN_PASSWORD || 'FortressMDM2025!';
+
+      if (username === adminUsername && password === adminPassword) {
         let user = await storage.getUser("admin");
         if (!user) {
           user = await storage.upsertUser({
