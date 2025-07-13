@@ -93,7 +93,7 @@ export class MemStorage implements IStorage {
 
   constructor() {
     // Initialize with demo devices
-    
+
   }
 
 
@@ -520,6 +520,42 @@ export class DatabaseStorage implements IStorage {
 
   async markAlertAsRead(id: number): Promise<void> {
     await db.update(geofenceAlerts).set({ isRead: true }).where(eq(geofenceAlerts.id, id));
+  }
+
+  async getDeviceByImei(imei: string): Promise<Device | undefined> {
+    if (!imei || imei.length !== 15) {
+      throw new Error('Invalid IMEI format');
+    }
+    const [device] = await db.select().from(devices).where(eq(devices.imei, imei));
+    return device;
+  }
+
+  async createUser(userData: any): Promise<User> {
+    const [user] = await db.insert(users).values(userData).returning();
+    return user;
+  }
+
+  async getPolicies(): Promise<any[]> {
+    // Assuming you have a 'policies' table in your schema
+    return await db.select().from(locationPolicies); // Changed from policies to locationPolicies
+  }
+
+  async createPolicy(policyData: any): Promise<LocationPolicy> {
+    const [policy] = await db.insert(locationPolicies).values(policyData).returning(); // Changed from policies to locationPolicies
+    return policy;
+  }
+
+  async updatePolicy(id: number, updates: any): Promise<LocationPolicy> {
+    const [policy] = await db
+      .update(locationPolicies) // Changed from policies to locationPolicies
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(locationPolicies.id, id)) // Changed from policies to locationPolicies
+      .returning();
+    return policy;
+  }
+
+  async deletePolicy(id: number): Promise<void> {
+    await db.delete(locationPolicies).where(eq(locationPolicies.id, id)); // Changed from policies to locationPolicies
   }
 }
 
