@@ -150,3 +150,61 @@ args = "echo \"🚀 Starting Fortress MDM in Production Mode...\""
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "NODE_ENV=production npm start"
+
+[[workflows.workflow]]
+name = "Production Build"
+author = 42361507
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🏗️ Building Fortress MDM for Production...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"✅ Web application built successfully!\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"📱 Building Android app...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd mobile-app && ./build-android.sh"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🎯 Production build completed!\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"   Web App: Ready for deployment on Replit\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"   Android App: APK files generated in mobile-app/android/app/build/outputs/apk/\""
+
+[[workflows.workflow]]
+name = "Production Start"
+author = 42361507
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🚀 Starting Fortress MDM in Production Mode...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=production npm start"
