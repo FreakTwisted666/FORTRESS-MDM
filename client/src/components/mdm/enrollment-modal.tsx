@@ -151,7 +151,7 @@ export function EnrollmentModal({ open, onOpenChange }: EnrollmentModalProps) {
               <div className="flex items-center space-x-2">
                 <QrCode className="text-blue-600 dark:text-blue-400" size={20} />
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                  QR Code will be generated after enrollment
+                  QR Code will be generated with enrollment credentials
                 </p>
               </div>
             </CardContent>

@@ -1,24 +1,16 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Upload, 
-  Download, 
-  FileSpreadsheet, 
-  QrCode, 
-  Users, 
-  CheckCircle,
-  AlertCircle,
-  FileText
-} from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
+import { Upload, FileText, QrCode, Users, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { QRCodeGenerator } from "./qr-code-generator";
 
 interface BulkEnrollmentProps {
   open: boolean;
@@ -32,6 +24,7 @@ export function BulkEnrollment({ open, onOpenChange }: BulkEnrollmentProps) {
   const [csvData, setCsvData] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [qrCodes, setQrCodes] = useState<string[]>([]);
 
   const sampleCsvData = `Device Name,IMEI,Serial Number,Device Type,Location,Department
 Samsung Galaxy Tab A8,352033111234567,,android,New York Office,IT
@@ -42,17 +35,17 @@ Surface Pro 9,,SP9SERIAL001,windows,Remote,Engineering`;
   const handleCsvUpload = (file: File) => {
     setIsProcessing(true);
     const reader = new FileReader();
-    
+
     reader.onload = (e) => {
       const content = e.target?.result as string;
       setCsvData(content);
-      
+
       // Simulate processing progress
       let progress = 0;
       const interval = setInterval(() => {
         progress += 10;
         setUploadProgress(progress);
-        
+
         if (progress >= 100) {
           clearInterval(interval);
           setIsProcessing(false);
@@ -63,25 +56,78 @@ Surface Pro 9,,SP9SERIAL001,windows,Remote,Engineering`;
         }
       }, 200);
     };
-    
+
     reader.readAsText(file);
   };
 
-  const handleBulkEnrollment = () => {
+  const handleBulkEnrollment = async () => {
     setIsProcessing(true);
-    
-    // Simulate bulk enrollment process
-    setTimeout(() => {
-      setIsProcessing(false);
-      setUploadProgress(0);
-      setCsvData("");
-      queryClient.invalidateQueries({ queryKey: ["/api/devices"] });
+    setUploadProgress(0);
+
+    try {
+      // Simulate processing
+      const totalSteps = 4;
+      for (let i = 0; i <= totalSteps; i++) {
+        setUploadProgress((i / totalSteps) * 100);
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
       toast({
-        title: "Bulk Enrollment Complete",
-        description: "Successfully enrolled 4 devices to the system.",
+        title: "Success",
+        description: "Devices enrolled successfully.",
       });
+
+      queryClient.invalidateQueries({ queryKey: ["/api/devices"] });
       onOpenChange(false);
-    }, 3000);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to enroll devices.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleGenerateQRCodes = () => {
+    const serverUrl = window.location.origin;
+    const enrollmentCode = process.env.MDM_ENROLLMENT_CODE || "DEMO-CODE-123";
+
+    // Generate QR codes for different device types/locations
+    const qrData = [
+      JSON.stringify({
+        serverUrl,
+        enrollmentCode,
+        deviceType: "android",
+        location: "Main Office"
+      }),
+      JSON.stringify({
+        serverUrl,
+        enrollmentCode,
+        deviceType: "android",
+        location: "Branch Office"
+      }),
+      JSON.stringify({
+        serverUrl,
+        enrollmentCode,
+        deviceType: "ios",
+        location: "Main Office"
+      }),
+      JSON.stringify({
+        serverUrl,
+        enrollmentCode,
+        deviceType: "android",
+        location: "Remote"
+      })
+    ];
+
+    setQrCodes(qrData);
+
+    toast({
+      title: "QR Codes Generated",
+      description: "QR codes are ready for device enrollment.",
+    });
   };
 
   const downloadTemplate = () => {
@@ -103,14 +149,14 @@ Surface Pro 9,,SP9SERIAL001,windows,Remote,Engineering`;
             <span>Bulk Device Enrollment</span>
           </DialogTitle>
         </DialogHeader>
-        
+
         <Tabs value={enrollmentMethod} onValueChange={(value) => setEnrollmentMethod(value as typeof enrollmentMethod)}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="csv">CSV Import</TabsTrigger>
             <TabsTrigger value="qr">QR Code Generation</TabsTrigger>
             <TabsTrigger value="manual">Manual Entry</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="csv" className="space-y-4">
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-4">
@@ -131,7 +177,7 @@ Surface Pro 9,,SP9SERIAL001,windows,Remote,Engineering`;
                     Upload a CSV file with device information
                   </p>
                 </div>
-                
+
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-2">
@@ -150,7 +196,7 @@ Surface Pro 9,,SP9SERIAL001,windows,Remote,Engineering`;
                     </p>
                   </CardContent>
                 </Card>
-                
+
                 {uploadProgress > 0 && (
                   <div className="space-y-2">
                     <Label>Processing Progress</Label>
@@ -159,7 +205,7 @@ Surface Pro 9,,SP9SERIAL001,windows,Remote,Engineering`;
                   </div>
                 )}
               </div>
-              
+
               <div className="space-y-4">
                 <Label>Preview Data</Label>
                 <Textarea
@@ -169,7 +215,7 @@ Surface Pro 9,,SP9SERIAL001,windows,Remote,Engineering`;
                   rows={10}
                   readOnly={!csvData}
                 />
-                
+
                 {csvData && (
                   <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
                     <div className="flex items-center space-x-2">
@@ -182,7 +228,7 @@ Surface Pro 9,,SP9SERIAL001,windows,Remote,Engineering`;
                 )}
               </div>
             </div>
-            
+
             {csvData && (
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -194,23 +240,38 @@ Surface Pro 9,,SP9SERIAL001,windows,Remote,Engineering`;
               </div>
             )}
           </TabsContent>
-          
+
           <TabsContent value="qr" className="space-y-4">
             <div className="text-center py-8">
-              <QrCode className="mx-auto text-gray-400 mb-4" size={64} />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                QR Code Bulk Enrollment
-              </h3>
-              <p className="text-gray-500 mb-4">
-                Generate QR codes for multiple device enrollment
-              </p>
-              <Button>
-                <QrCode className="mr-2" size={16} />
-                Generate QR Codes
-              </Button>
+              {qrCodes.length === 0 ? (
+                <>
+                  <QrCode className="mx-auto text-gray-400 mb-4" size={64} />
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    QR Code Bulk Enrollment
+                  </h3>
+                  <p className="text-gray-500 mb-4">
+                    Generate QR codes for multiple device enrollment
+                  </p>
+                  <Button onClick={handleGenerateQRCodes}>
+                    <QrCode className="mr-2" size={16} />
+                    Generate QR Codes
+                  </Button>
+                </>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  {qrCodes.map((qrCode, index) => (
+                    <div key={index} className="p-4 border rounded-md">
+                      <QRCodeGenerator value={qrCode} size={128} />
+                      <p className="text-sm text-gray-500 mt-2">
+                        QR Code {index + 1}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </TabsContent>
-          
+
           <TabsContent value="manual" className="space-y-4">
             <div className="text-center py-8">
               <FileText className="mx-auto text-gray-400 mb-4" size={64} />
